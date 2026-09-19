@@ -203,8 +203,8 @@ var Themes = map[string]Palette{
 	// Rosé Pine (Moon accents on the main palette's darker base, matching
 	// the upstream terminal themes). It has no green, so the usual
 	// green-for-LISTEN convention doesn't apply; instead each of the six
-	// hues gets its own column — foam TCP, rose UDP, gold LISTEN, pine
-	// ESTABLISHED, iris chrome, love danger — so the theme reads as Rosé
+	// hues maps to a different semantic role — foam TCP, rose UDP, gold LISTEN,
+	// pine ESTABLISHED, iris chrome, love danger — so the theme reads as Rosé
 	// Pine rather than as one accent color repeated everywhere.
 	"rose-pine": {
 		Accent: "#3E8FB0", AccentDark: "#3E8FB0",
