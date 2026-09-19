@@ -411,6 +411,14 @@ OS's config directory.
   to tell apart — `export TERM=xterm-256color` (or `COLORTERM=truecolor`)
   fixes it. This is common in minimal Docker/SSH sessions.
 
+## Browser dashboard
+
+Run `portop --web` and open <http://127.0.0.1:8088>. The dashboard refreshes
+socket ownership every two seconds and offers a local filter for port, PID, and
+process. `--listen`, `--no-dns`, `--no-systemd`, `--no-docker`, and an optional
+positional filter also apply. Use `--web-addr 127.0.0.1:9090` to choose a
+port. The server binds only to loopback and is read-only; stop it with Ctrl-C.
+
 ## 🤝 Contributing
 
 Pull requests are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for the

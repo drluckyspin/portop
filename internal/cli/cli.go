@@ -10,6 +10,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"net"
 	"strconv"
 	"strings"
 	"time"
@@ -40,6 +41,7 @@ Usage:
                            (exit code 3 if something changed — handy in
                            a cron job or systemd timer)
   portop --compose DIR     audit published ports from a Docker Compose folder
+  portop --web             serve a local dashboard at http://127.0.0.1:8088
   portop --init-config     write a default config.yml and exit
 
 config.yml (optional, see --init-config) sets default flag values, the
@@ -62,6 +64,8 @@ func Run(args []string, stdout, stderr io.Writer) int {
 
 	listenOnly := fs.Bool("listen", false, "show only sockets in LISTEN state")
 	jsonMode := fs.Bool("json", false, "print a JSON snapshot and exit (non-interactive)")
+	webMode := fs.Bool("web", false, "serve a local web dashboard")
+	webAddr := fs.String("web-addr", "127.0.0.1:8088", "web dashboard listen address (loopback only)")
 	noDNS := fs.Bool("no-dns", false, "disable reverse DNS lookups on ESTABLISHED connections")
 	noSystemd := fs.Bool("no-systemd", false, "disable systemd unit association")
 	noDocker := fs.Bool("no-docker", false, "disable Docker container association")
@@ -198,6 +202,13 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	}
 
 	switch {
+	case *webMode:
+		host, _, err := net.SplitHostPort(*webAddr)
+		if err != nil || (host != "localhost" && !net.ParseIP(host).IsLoopback()) {
+			fmt.Fprintln(stderr, "portop: --web-addr must be a loopback host:port")
+			return 2
+		}
+		return runWeb(stdout, stderr, *webAddr, filter, *listenOnly, opts)
 	case *composeDir != "":
 		return runComposeAudit(stdout, stderr, *composeDir, *jsonMode, opts)
 	case *saveBaseline:
