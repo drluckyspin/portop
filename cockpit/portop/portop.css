@@ -1,0 +1,2 @@
+body{font:14px system-ui,sans-serif;margin:2rem;color:var(--pf-v6-global--Color--100,#222);background:var(--pf-v6-global--BackgroundColor--100,#fff)}
+header{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}h1{margin:0}input{font:inherit;padding:.45rem}#status{min-height:1.5em}.table{overflow-x:auto}table{width:100%;border-collapse:collapse}th{text-align:left}td,th{padding:.7rem;border-bottom:1px solid #aaa}

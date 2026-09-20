@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>portop</title>
+  <link rel="stylesheet" href="portop.css">
+  <script src="../base1/cockpit.js"></script>
+  <script defer src="portop.js"></script>
+</head>
+<body>
+  <header><h1>Ports</h1><label>Filter <input id="filter" type="search" placeholder="Port, process, PID"></label></header>
+  <p id="status" role="status">Loading ports…</p>
+  <div class="table"><table><thead><tr><th>Protocol</th><th>Local</th><th>State</th><th>PID</th><th>Process</th><th>Service</th></tr></thead><tbody id="rows"></tbody></table></div>
+</body>
+</html>

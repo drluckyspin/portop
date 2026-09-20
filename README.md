@@ -419,6 +419,11 @@ process. `--listen`, `--no-dns`, `--no-systemd`, `--no-docker`, and an optional
 positional filter also apply. Use `--web-addr 127.0.0.1:9090` to choose a
 port. The server binds only to loopback and is read-only; stop it with Ctrl-C.
 
+## Cockpit add-on
+
+The optional Cockpit page is in [`cockpit/portop`](cockpit/README.md). It lists
+ports using the current Cockpit session and needs no separate web server.
+
 ## 🤝 Contributing
 
 Pull requests are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for the
