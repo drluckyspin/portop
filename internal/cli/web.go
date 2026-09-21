@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/padovanl/portop/internal/app"
@@ -65,10 +66,13 @@ func runWeb(stdout, stderr io.Writer, address, filter string, listenOnly bool, o
 	}
 	defer listener.Close()
 	fmt.Fprintf(stdout, "portop web: http://%s\n", listener.Addr())
-	collector := app.NewCollector
+	collector := app.NewCollector()
+	var mu sync.Mutex
 	server := &http.Server{
 		Handler: webHandler(func(ctx context.Context, opts app.Options) ([]app.Row, error) {
-			return collector().Collect(ctx, opts)
+			mu.Lock()
+			defer mu.Unlock()
+			return collector.Collect(ctx, opts)
 		}, filter, listenOnly, opts),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
