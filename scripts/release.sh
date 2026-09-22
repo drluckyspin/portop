@@ -28,7 +28,7 @@ if [ -n "$(git status --porcelain)" ]; then
 fi
 
 echo "Fetching origin..."
-git fetch origin --quiet --tags main
+git fetch origin --quiet --tags main develop
 
 if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
 	ahead="$(git rev-list --count origin/main..HEAD)"
@@ -38,6 +38,11 @@ if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
 	else
 		echo "error: local main is ahead of origin/main by ${ahead} commit(s); run 'git push origin main'" >&2
 	fi
+	exit 1
+fi
+
+if ! git merge-base --is-ancestor origin/develop HEAD; then
+	echo "error: main does not contain the latest origin/develop; merge develop into main before tagging" >&2
 	exit 1
 fi
 

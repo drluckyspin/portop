@@ -72,11 +72,6 @@ snapshot:
 
 changelog:
   sort: asc
-  filters:
-    exclude:
-      - "^test:"
-      - "^ci:"
-      - "^chore:"
 
 release:
   github:
