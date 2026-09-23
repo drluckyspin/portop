@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>portop · ports</title>
+  <link rel="stylesheet" href="/app.css">
+  <script defer src="/app.js"></script>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>portop</h1>
+      <p>Live local ports · refreshes every 2 seconds</p>
+    </div>
+    <input id="filter" type="search" placeholder="Filter port, process, PID" aria-label="Filter ports">
+  </header>
+  <p id="status" role="status"></p>
+  <div class="table">
+    <table>
+      <thead><tr><th>Protocol</th><th>Local</th><th>State</th><th>PID</th><th>Process</th><th>CPU</th><th>Service / container</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+</body>
+</html>

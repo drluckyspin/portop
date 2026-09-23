@@ -9,8 +9,16 @@
   <script defer src="portop.js"></script>
 </head>
 <body>
-  <header><h1>Ports</h1><label>Filter <input id="filter" type="search" placeholder="Port, process, PID"></label></header>
+  <header>
+    <h1>Ports</h1>
+    <label>Filter <input id="filter" type="search" placeholder="Port, process, PID"></label>
+  </header>
   <p id="status" role="status">Loading ports…</p>
-  <div class="table"><table><thead><tr><th>Protocol</th><th>Local</th><th>State</th><th>PID</th><th>Process</th><th>Service</th></tr></thead><tbody id="rows"></tbody></table></div>
+  <div class="table">
+    <table>
+      <thead><tr><th>Protocol</th><th>Local</th><th>State</th><th>PID</th><th>Process</th><th>Service</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
 </body>
 </html>

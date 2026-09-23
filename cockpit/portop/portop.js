@@ -13,11 +13,20 @@
         for (const row of rows) {
             if (query && !String(row.local_port).includes(query) &&
                 !String(row.pid || "").includes(query) &&
-                !(row.process || "").toLowerCase().includes(query)) continue;
+                !(row.process || "").toLowerCase().includes(query)) {
+                continue;
+            }
             shown++;
             const tr = document.createElement("tr");
-            for (const value of [row.protocol, row.local_address + ":" + row.local_port,
-                row.state, row.pid || "—", row.process || "—", row.systemd_unit || row.container || "—"]) {
+            const values = [
+                row.protocol,
+                row.local_address + ":" + row.local_port,
+                row.state,
+                row.pid || "—",
+                row.process || "—",
+                row.systemd_unit || row.container || "—"
+            ];
+            for (const value of values) {
                 const td = document.createElement("td");
                 td.textContent = value;
                 tr.append(td);
@@ -28,7 +37,9 @@
     }
 
     async function refresh() {
-        if (active || document.hidden) return;
+        if (active || document.hidden) {
+            return;
+        }
         active = true;
         try {
             const output = await cockpit.spawn(["portop", "--json", "--no-dns"], { err: "message" });

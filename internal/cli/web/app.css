@@ -1,0 +1,18 @@
+:root {
+  color-scheme: dark;
+  font-family: system-ui, sans-serif;
+  background: #111827;
+  color: #e5e7eb;
+}
+
+body { max-width: 1150px; margin: 0 auto; padding: 2rem; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+h1 { margin: 0; color: #6ee7b7; }
+p { color: #9ca3af; }
+input { background: #1f2937; color: inherit; border: 1px solid #4b5563; border-radius: 6px; padding: .7rem; font: inherit; min-width: 16rem; }
+.table { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
+th { text-align: left; color: #9ca3af; font-size: .8rem; text-transform: uppercase; }
+td, th { padding: .8rem; border-bottom: 1px solid #374151; }
+tbody tr:hover { background: #1f2937; }
+#status { min-height: 1.5em; }

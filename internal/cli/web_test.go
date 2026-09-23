@@ -1,11 +1,13 @@
 package cli
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/padovanl/portop/internal/app"
@@ -28,6 +30,13 @@ func TestWebHandler(t *testing.T) {
 	if err := json.Unmarshal(response.Body.Bytes(), &got); err != nil || len(got) != 1 || got[0].LocalPort != 8080 {
 		t.Fatalf("rows: %+v, error: %v", got, err)
 	}
+	for _, path := range []string{"/", "/app.css", "/app.js"} {
+		asset := httptest.NewRecorder()
+		h.ServeHTTP(asset, httptest.NewRequest(http.MethodGet, "http://127.0.0.1"+path, nil))
+		if asset.Code != http.StatusOK || asset.Body.Len() == 0 || strings.Contains(asset.Header().Get("Content-Security-Policy"), "unsafe-inline") {
+			t.Errorf("asset %s: status %d, headers %v", path, asset.Code, asset.Header())
+		}
+	}
 	request.Host = "attacker.example"
 	response = httptest.NewRecorder()
 	h.ServeHTTP(response, request)
@@ -38,13 +47,9 @@ func TestWebHandler(t *testing.T) {
 
 func TestWebAddressMustBeLoopback(t *testing.T) {
 	for _, address := range []string{"0.0.0.0:8088", "example.com:8088", ":8088"} {
-		var out, errOut testWriter
+		var out, errOut bytes.Buffer
 		if code := Run([]string{"--web", "--web-addr", address}, &out, &errOut); code != 2 {
 			t.Errorf("%s: exit %d", address, code)
 		}
 	}
 }
-
-type testWriter struct{ data []byte }
-
-func (w *testWriter) Write(p []byte) (int, error) { w.data = append(w.data, p...); return len(p), nil }
