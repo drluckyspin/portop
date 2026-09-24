@@ -3,24 +3,49 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>portop · ports</title>
+  <meta name="theme-color" content="#0d0b08">
+  <title>portop · live ports</title>
   <link rel="stylesheet" href="/app.css">
   <script defer src="/app.js"></script>
 </head>
 <body>
-  <header>
-    <div>
-      <h1>portop</h1>
-      <p>Live local ports · refreshes every 2 seconds</p>
-    </div>
-    <input id="filter" type="search" placeholder="Filter port, process, PID" aria-label="Filter ports">
-  </header>
-  <p id="status" role="status"></p>
-  <div class="table">
-    <table>
-      <thead><tr><th>Protocol</th><th>Local</th><th>State</th><th>PID</th><th>Process</th><th>CPU</th><th>Service / container</th></tr></thead>
-      <tbody id="rows"></tbody>
-    </table>
-  </div>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">:</span>port<span>op</span></div>
+      <span class="mode"><span class="pulse" aria-hidden="true"></span>LOCAL LIVE VIEW</span>
+    </header>
+
+    <section class="intro" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">NETWORK / SOCKETS</p>
+        <h1 id="page-title">Every port.<br><em>One view.</em></h1>
+        <p class="lede">See what is listening, who owns it, and where it connects.</p>
+      </div>
+      <div class="summary" aria-label="Socket totals">
+        <div><strong id="total-count">—</strong><span>SOCKETS</span></div>
+        <div><strong id="listen-count">—</strong><span>LISTENING</span></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Ports">
+      <div class="toolbar">
+        <div class="panel-title"><span class="panel-icon" aria-hidden="true">▦</span> Port activity <span id="visible-count" class="count"></span></div>
+        <label class="search">
+          <span aria-hidden="true">⌕</span>
+          <input id="filter" type="search" placeholder="Port, process or PID" autocomplete="off" aria-label="Filter ports">
+          <kbd>/</kbd>
+        </label>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>PORT / ADDRESS</th><th>PROTOCOL</th><th>STATE</th><th>PROCESS</th><th>PID</th><th>CPU</th><th>SERVICE / CONTAINER</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <p id="empty" class="empty" hidden>No ports match your filter.</p>
+      </div>
+      <footer class="panel-footer"><span id="status" role="status">Connecting…</span><span>Refreshes every 2s · read only</span></footer>
+    </section>
+    <p class="footnote">Showing sockets visible to the user running portop.</p>
+  </main>
 </body>
 </html>

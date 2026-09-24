@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -73,6 +74,27 @@ func webHandler(collect func(context.Context, app.Options) ([]app.Row, error), f
 		w.Header().Set("Content-Security-Policy", "default-src 'none'; style-src 'self'; script-src 'self'; connect-src 'self'")
 		mux.ServeHTTP(w, r)
 	})
+}
+
+func webAddress(address string, port int, addrSet, portSet bool) (string, error) {
+	if addrSet && portSet {
+		return "", fmt.Errorf("use --web-port or --web-addr, not both")
+	}
+	if portSet {
+		if port < 1 || port > 65535 {
+			return "", fmt.Errorf("--web-port must be between 1 and 65535")
+		}
+		address = net.JoinHostPort("127.0.0.1", strconv.Itoa(port))
+	}
+	host, rawPort, err := net.SplitHostPort(address)
+	if err != nil || (host != "localhost" && !net.ParseIP(host).IsLoopback()) {
+		return "", fmt.Errorf("--web-addr must be a loopback host:port")
+	}
+	n, err := strconv.Atoi(rawPort)
+	if err != nil || n < 1 || n > 65535 {
+		return "", fmt.Errorf("--web-addr port must be between 1 and 65535")
+	}
+	return address, nil
 }
 
 func runWeb(stdout, stderr io.Writer, address, filter string, listenOnly bool, opts app.Options) int {

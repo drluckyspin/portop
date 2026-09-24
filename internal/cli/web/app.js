@@ -1,40 +1,53 @@
 const body = document.getElementById("rows");
-const status = document.getElementById("status");
 const filter = document.getElementById("filter");
+const status = document.getElementById("status");
+const empty = document.getElementById("empty");
+const totalCount = document.getElementById("total-count");
+const listenCount = document.getElementById("listen-count");
+const visibleCount = document.getElementById("visible-count");
 let rows = [];
 let refreshing = false;
 
+function cell(row, value, className) {
+    const td = document.createElement("td");
+    if (className) td.className = className;
+    td.textContent = value;
+    row.append(td);
+    return td;
+}
+
 function render() {
-    const query = filter.value.toLowerCase();
-    body.replaceChildren();
-    let shown = 0;
+    const query = filter.value.trim().toLowerCase();
+    const matches = rows.filter(row => !query ||
+        String(row.local_port).includes(query) ||
+        String(row.pid || "").includes(query) ||
+        (row.process || "").toLowerCase().includes(query) ||
+        (row.local_address || "").toLowerCase().includes(query));
+    const fragment = document.createDocumentFragment();
 
-    for (const row of rows) {
-        if (query && !String(row.local_port).includes(query) &&
-            !String(row.pid || "").includes(query) &&
-            !(row.process || "").toLowerCase().includes(query)) {
-            continue;
-        }
-
-        shown++;
+    for (const port of matches) {
         const tr = document.createElement("tr");
-        const values = [
-            row.protocol,
-            row.local_address + ":" + row.local_port,
-            row.state,
-            row.pid || "—",
-            row.process || "—",
-            row.cpu_percent.toFixed(1) + "%",
-            row.systemd_unit || row.container || "—"
-        ];
-        for (const value of values) {
-            const td = document.createElement("td");
-            td.textContent = value;
-            tr.append(td);
-        }
-        body.append(tr);
+        const local = cell(tr, ":" + port.local_port, "port");
+        const address = document.createElement("span");
+        address.className = "address";
+        address.textContent = port.local_address;
+        local.append(address);
+        cell(tr, port.protocol);
+        const state = cell(tr, "", "");
+        const badge = document.createElement("span");
+        badge.className = "state " + port.state.toLowerCase();
+        badge.textContent = port.state;
+        state.append(badge);
+        cell(tr, port.process || "Unknown", port.process ? "process" : "muted");
+        cell(tr, port.pid || "—", port.pid ? "" : "muted");
+        cell(tr, port.cpu_percent.toFixed(1) + "%");
+        cell(tr, port.systemd_unit || port.container || "—", port.systemd_unit || port.container ? "" : "muted");
+        fragment.append(tr);
     }
-    status.textContent = shown + " sockets visible";
+
+    body.replaceChildren(fragment);
+    visibleCount.textContent = matches.length;
+    empty.hidden = matches.length !== 0;
 }
 
 async function refresh() {
@@ -44,9 +57,14 @@ async function refresh() {
         const response = await fetch("/api/ports", { cache: "no-store" });
         if (!response.ok) throw new Error("scan failed");
         rows = await response.json();
+        totalCount.textContent = rows.length;
+        listenCount.textContent = rows.filter(row => row.state === "LISTEN").length;
+        status.classList.remove("error");
+        status.textContent = "● Updated " + new Date().toLocaleTimeString();
         render();
     } catch (error) {
-        status.textContent = "Unable to refresh ports: " + error.message;
+        status.classList.add("error");
+        status.textContent = "● Could not refresh ports";
     } finally {
         refreshing = false;
     }
@@ -54,5 +72,11 @@ async function refresh() {
 
 filter.addEventListener("input", render);
 document.addEventListener("visibilitychange", refresh);
+document.addEventListener("keydown", event => {
+    if (event.key === "/" && document.activeElement !== filter) {
+        event.preventDefault();
+        filter.focus();
+    }
+});
 refresh();
 setInterval(refresh, 2000);
