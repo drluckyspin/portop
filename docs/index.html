@@ -387,6 +387,7 @@
     <span class="brand">portop</span>
     <nav>
       <a href="#features">features</a>
+      <a href="#web">web</a>
       <a href="#differentiators">beyond ss</a>
       <a href="#demo">screenshot</a>
       <a href="#install">install</a>
@@ -471,6 +472,10 @@
           <p><code>--compose DIR</code> checks a Docker Compose folder and reports expected, unused or conflicting published ports.</p>
         </div>
         <div class="card">
+          <h3><span class="dot state-new">◈</span>Local web dashboard</h3>
+          <p><code>portop --web</code> opens a live, searchable, read-only port table in your browser. Pick a port with <code>--web-port</code>.</p>
+        </div>
+        <div class="card">
           <h3><span class="dot state-established">◆</span>Live settings screen</h3>
           <p><kbd>,</kbd> opens it: cycle 13 themes (Dracula, Nord, Solarized, Gruvbox, Catppuccin, Tokyo Night, Monokai, Darcula, VS Code, Ubuntu, Rosé Pine, ...) with the arrow keys as the whole UI re-skins live, rebind any of 20 actions — saved automatically, no file to touch.</p>
         </div>
@@ -531,6 +536,17 @@
           </div>
         </div>
 
+      </div>
+    </section>
+
+    <section id="web" class="section">
+      <h2>Ports in your browser</h2>
+      <p class="section-lede">The same live socket data, in a small local dashboard. Search by port, address, process or PID. It refreshes every two seconds and only listens on your machine.</p>
+      <div class="feature-window">
+        <div class="term-titlebar"><span>Start the web dashboard</span><span class="chip"><span class="k">--web</span></span></div>
+        <div class="feature-window-body">
+          <p><code>portop --web</code> → <code>http://127.0.0.1:8088</code><br><code>portop --web --web-port 9090</code> → <code>http://127.0.0.1:9090</code></p>
+        </div>
       </div>
     </section>
 

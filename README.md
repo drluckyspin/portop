@@ -59,6 +59,8 @@ open, inspect or kill it, live.
   listening, unused, or already taken by another process/container.
 - **Scriptable**: `--json` prints a clean snapshot for piping into `jq`,
   dashboards, or your own tooling.
+- **Local web dashboard**: `--web` shows live ports in a browser, with search
+  and a compact read-only table.
 
 ### 🎨 Make it yours
 
@@ -253,6 +255,9 @@ portop --diff            # compare live ports against the saved baseline
 
 portop --compose ./stack  # audit Compose published ports in a project folder
 portop --compose ./stack --json
+
+portop --web              # local dashboard on port 8088
+portop --web --web-port 9090  # choose the web server port
 ```
 
 Run `portop --help` for the full flag list.
@@ -414,10 +419,11 @@ OS's config directory.
 ## Browser dashboard
 
 Run `portop --web` and open <http://127.0.0.1:8088>. The dashboard refreshes
-socket ownership every two seconds and offers a local filter for port, PID, and
-process. `--listen`, `--no-dns`, `--no-systemd`, `--no-docker`, and an optional
-positional filter also apply. Use `--web-addr 127.0.0.1:9090` to choose a
-port. The server binds only to loopback and is read-only; stop it with Ctrl-C.
+every two seconds and filters by port, address, process or PID. Choose another
+port with `portop --web --web-port 9090`. The server binds only to loopback;
+it is read-only and stops with Ctrl-C. `--listen`, `--no-dns`, `--no-systemd`,
+`--no-docker` and a positional filter also apply. The existing `--web-addr`
+option remains available for a specific loopback address.
 
 ## Cockpit add-on
 
