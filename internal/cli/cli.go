@@ -18,6 +18,7 @@ import (
 	"github.com/padovanl/portop/internal/baseline"
 	"github.com/padovanl/portop/internal/compose"
 	"github.com/padovanl/portop/internal/config"
+	"github.com/padovanl/portop/internal/procinfo"
 	"github.com/padovanl/portop/internal/scanner"
 	"github.com/padovanl/portop/internal/ui"
 )
@@ -76,6 +77,10 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	composeDir := fs.String("compose", "", "audit published ports from a Docker Compose project directory")
 	configPath := fs.String("config", "", "config file path (default: OS config dir)/portop/config.yml")
 	initConfig := fs.Bool("init-config", false, "write a default config.yml and exit")
+	inspectPID := fs.Int("inspect-pid", 0, "print process details as JSON")
+	signalPID := fs.Int("signal-pid", 0, "signal a process after checking its start time")
+	expectedStart := fs.String("expected-start", "", "start time from --inspect-pid")
+	forceSignal := fs.Bool("force", false, "use SIGKILL with --signal-pid instead of SIGTERM")
 
 	// The stdlib flag package stops parsing at the first non-flag
 	// argument, which would break "portop 8080 --json" (flag package
@@ -183,6 +188,26 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		}
 	}
 	ui.ApplyKeyBindings(fileCfg.Keybindings)
+
+	if *inspectPID != 0 {
+		info, err := procinfo.Load(*inspectPID)
+		if err != nil {
+			fmt.Fprintln(stderr, "portop: "+err.Error())
+			return 1
+		}
+		if err := json.NewEncoder(stdout).Encode(info); err != nil {
+			fmt.Fprintln(stderr, "portop: "+err.Error())
+			return 1
+		}
+		return 0
+	}
+	if *signalPID != 0 {
+		if err := signalProcess(*signalPID, *expectedStart, *forceSignal); err != nil {
+			fmt.Fprintln(stderr, "portop: "+err.Error())
+			return 1
+		}
+		return 0
+	}
 
 	filter := strings.Join(positional, " ")
 

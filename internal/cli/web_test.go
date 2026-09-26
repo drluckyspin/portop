@@ -4,13 +4,17 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os/exec"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/padovanl/portop/internal/app"
+	"github.com/padovanl/portop/internal/procinfo"
 	"github.com/padovanl/portop/internal/scanner"
 )
 
@@ -19,7 +23,7 @@ func TestWebHandler(t *testing.T) {
 		{Protocol: scanner.TCP, LocalAddr: net.ParseIP("127.0.0.1"), LocalPort: 8080, State: scanner.StateListen, PID: 42, ProcessName: "<script>"},
 		{Protocol: scanner.TCP, LocalAddr: net.ParseIP("127.0.0.1"), LocalPort: 8081, State: scanner.StateEstablished},
 	}
-	h := webHandler(func(context.Context, app.Options) ([]app.Row, error) { return rows, nil }, "8080", true, app.Options{})
+	h := webHandler(func(context.Context, app.Options) ([]app.Row, error) { return rows, nil }, "8080", true, app.Options{}, "test-token")
 	request := httptest.NewRequest(http.MethodGet, "http://127.0.0.1/api/ports", nil)
 	response := httptest.NewRecorder()
 	h.ServeHTTP(response, request)
@@ -83,5 +87,60 @@ func TestWebFlagsRejectInvalidAddress(t *testing.T) {
 		if code := Run(args, &out, &errOut); code != 2 {
 			t.Errorf("%v: exit %d, stderr %q", args, code, errOut.String())
 		}
+	}
+}
+
+func TestWebProcessActions(t *testing.T) {
+	cmd := exec.Command("sleep", "30")
+	if err := cmd.Start(); err != nil {
+		t.Skipf("cannot start test process: %v", err)
+	}
+	defer func() {
+		_ = cmd.Process.Kill()
+		_ = cmd.Wait()
+	}()
+	pid := cmd.Process.Pid
+	h := webHandler(func(context.Context, app.Options) ([]app.Row, error) {
+		return []app.Row{{PID: pid}}, nil
+	}, "", false, app.Options{}, "test-token")
+	url := fmt.Sprintf("http://127.0.0.1/api/process/%d", pid)
+	request := httptest.NewRequest(http.MethodGet, url, nil)
+	response := httptest.NewRecorder()
+	h.ServeHTTP(response, request)
+	if response.Code != http.StatusForbidden {
+		t.Fatalf("missing token: %d", response.Code)
+	}
+	request.Header.Set("X-Portop-Token", "test-token")
+	hidden := webHandler(func(context.Context, app.Options) ([]app.Row, error) {
+		return nil, nil
+	}, "", false, app.Options{}, "test-token")
+	response = httptest.NewRecorder()
+	hidden.ServeHTTP(response, request)
+	if response.Code != http.StatusNotFound {
+		t.Fatalf("process without a socket: %d", response.Code)
+	}
+	response = httptest.NewRecorder()
+	h.ServeHTTP(response, request)
+	if response.Code != http.StatusOK {
+		t.Fatalf("inspect: %d: %s", response.Code, response.Body.String())
+	}
+	var info procinfo.Info
+	if err := json.Unmarshal(response.Body.Bytes(), &info); err != nil || info.PID != pid || info.StartTime.IsZero() {
+		t.Fatalf("process details: %+v, %v", info, err)
+	}
+	signalURL := url + "/signal"
+	signal := func(start string) *httptest.ResponseRecorder {
+		payload, _ := json.Marshal(map[string]any{"start_time": start, "force": false})
+		req := httptest.NewRequest(http.MethodPost, signalURL, bytes.NewReader(payload))
+		req.Header.Set("X-Portop-Token", "test-token")
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+		return rec
+	}
+	if response := signal(info.StartTime.Add(-time.Second).Format(time.RFC3339Nano)); response.Code != http.StatusConflict {
+		t.Fatalf("stale process signal: %d: %s", response.Code, response.Body.String())
+	}
+	if response := signal(info.StartTime.Format(time.RFC3339Nano)); response.Code != http.StatusNoContent {
+		t.Fatalf("terminate: %d: %s", response.Code, response.Body.String())
 	}
 }

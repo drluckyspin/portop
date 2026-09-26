@@ -2,7 +2,10 @@ package cli
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/subtle"
 	_ "embed"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,6 +16,7 @@ import (
 	"time"
 
 	"github.com/padovanl/portop/internal/app"
+	"github.com/padovanl/portop/internal/procinfo"
 	"github.com/padovanl/portop/internal/scanner"
 )
 
@@ -25,7 +29,7 @@ var webCSS string
 //go:embed web/app.js
 var webJS string
 
-func webHandler(collect func(context.Context, app.Options) ([]app.Row, error), filter string, listenOnly bool, opts app.Options) http.Handler {
+func webHandler(collect func(context.Context, app.Options) ([]app.Row, error), filter string, listenOnly bool, opts app.Options, token string) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -59,6 +63,75 @@ func webHandler(collect func(context.Context, app.Options) ([]app.Row, error), f
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		_ = json.NewEncoder(w).Encode(out)
+	})
+	currentProcess := func(r *http.Request, pid int) (bool, error) {
+		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+		defer cancel()
+		rows, err := collect(ctx, opts)
+		if err != nil {
+			return false, err
+		}
+		for _, row := range rows {
+			if row.PID == pid {
+				return true, nil
+			}
+		}
+		return false, nil
+	}
+	processRequest := func(w http.ResponseWriter, r *http.Request) (int, bool) {
+		if token == "" || subtle.ConstantTimeCompare([]byte(r.Header.Get("X-Portop-Token")), []byte(token)) != 1 {
+			http.Error(w, "action token required; open the URL printed by portop", http.StatusForbidden)
+			return 0, false
+		}
+		pid, err := strconv.Atoi(r.PathValue("pid"))
+		if err != nil || pid <= 0 {
+			http.Error(w, "invalid PID", http.StatusBadRequest)
+			return 0, false
+		}
+		visible, err := currentProcess(r, pid)
+		if err != nil {
+			http.Error(w, "port scan failed", http.StatusInternalServerError)
+			return 0, false
+		}
+		if !visible {
+			http.Error(w, "process no longer owns a visible socket", http.StatusNotFound)
+			return 0, false
+		}
+		return pid, true
+	}
+	mux.HandleFunc("GET /api/process/{pid}", func(w http.ResponseWriter, r *http.Request) {
+		pid, ok := processRequest(w, r)
+		if !ok {
+			return
+		}
+		info, err := procinfo.Load(pid)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		_ = json.NewEncoder(w).Encode(info)
+	})
+	mux.HandleFunc("POST /api/process/{pid}/signal", func(w http.ResponseWriter, r *http.Request) {
+		pid, ok := processRequest(w, r)
+		if !ok {
+			return
+		}
+		var action struct {
+			StartTime string `json:"start_time"`
+			Force     bool   `json:"force"`
+		}
+		decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1024))
+		decoder.DisallowUnknownFields()
+		if err := decoder.Decode(&action); err != nil {
+			http.Error(w, "invalid action", http.StatusBadRequest)
+			return
+		}
+		if err := signalProcess(pid, action.StartTime, action.Force); err != nil {
+			http.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
 	})
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		host := r.Host
@@ -104,7 +177,13 @@ func runWeb(stdout, stderr io.Writer, address, filter string, listenOnly bool, o
 		return 1
 	}
 	defer listener.Close()
-	fmt.Fprintf(stdout, "portop web: http://%s\n", listener.Addr())
+	secret := make([]byte, 24)
+	if _, err := rand.Read(secret); err != nil {
+		fmt.Fprintln(stderr, "portop: web: could not create action token")
+		return 1
+	}
+	token := hex.EncodeToString(secret)
+	fmt.Fprintf(stdout, "portop web: http://%s/#token=%s\n", listener.Addr(), token)
 	collector := app.NewCollector()
 	var mu sync.Mutex
 	server := &http.Server{
@@ -112,7 +191,7 @@ func runWeb(stdout, stderr io.Writer, address, filter string, listenOnly bool, o
 			mu.Lock()
 			defer mu.Unlock()
 			return collector.Collect(ctx, opts)
-		}, filter, listenOnly, opts),
+		}, filter, listenOnly, opts, token),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 	if err := server.Serve(listener); err != nil && err != http.ErrServerClosed {

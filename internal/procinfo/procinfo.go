@@ -22,16 +22,16 @@ const clockTicksPerSec = 100
 
 // Info is everything portop's detail view shows about a process.
 type Info struct {
-	PID        int
-	Name       string
-	Cmdline    string // full command line, args space-joined
-	Exe        string // resolved path of the executable, if readable
-	Cwd        string // resolved working directory, if readable
-	User       string // resolved username, or the raw uid if unresolvable
-	RSSBytes   uint64 // resident set size
-	StartTime  time.Time
-	NumThreads int
-	OpenFiles  int // number of entries in /proc/<pid>/fd, -1 if unreadable
+	PID        int       `json:"pid"`
+	Name       string    `json:"name"`
+	Cmdline    string    `json:"cmdline"`   // full command line, args space-joined
+	Exe        string    `json:"exe"`       // resolved path of the executable, if readable
+	Cwd        string    `json:"cwd"`       // resolved working directory, if readable
+	User       string    `json:"user"`      // resolved username, or the raw uid if unresolvable
+	RSSBytes   uint64    `json:"rss_bytes"` // resident set size
+	StartTime  time.Time `json:"start_time"`
+	NumThreads int       `json:"num_threads"`
+	OpenFiles  int       `json:"open_files"` // number of entries in /proc/<pid>/fd, -1 if unreadable
 }
 
 // loadProc gathers everything available for pid. Fields that cannot be read
