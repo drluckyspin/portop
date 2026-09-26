@@ -425,6 +425,8 @@ it is read-only and stops with Ctrl-C. `--listen`, `--no-dns`, `--no-systemd`,
 `--no-docker` and a positional filter also apply. The existing `--web-addr`
 option remains available for a specific loopback address.
 
+See the [dashboard screenshot](docs/assets/web-dashboard.png).
+
 ## Cockpit add-on
 
 The optional Cockpit page is in [`cockpit/portop`](cockpit/README.md). It lists

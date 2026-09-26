@@ -289,6 +289,7 @@
     margin-bottom: 14px;
   }
   .demo-frame img { display: block; width: 100%; height: auto; }
+  .web-shot { margin-top: 24px; }
   .demo-caption { color: var(--rust); font-size: 0.92rem; font-family: var(--serif); margin: 0; }
 
   /* ---- install ---- */
@@ -548,6 +549,12 @@
           <p><code>portop --web</code> → <code>http://127.0.0.1:8088</code><br><code>portop --web --web-port 9090</code> → <code>http://127.0.0.1:9090</code></p>
         </div>
       </div>
+      <div class="demo-frame web-shot">
+        <a href="assets/web-dashboard.png" aria-label="Open the full-size web dashboard screenshot">
+          <img src="assets/web-dashboard.png" width="1425" height="1289" alt="Portop web dashboard showing nine listening sockets, process owners where available, and live search" loading="lazy">
+        </a>
+      </div>
+      <p class="demo-caption">Captured from portop on Linux with <code>--listen</code>. Unknown owners reflect the current user's process permissions.</p>
     </section>
 
     <section id="demo" class="section">
