@@ -9,15 +9,7 @@
 <meta property="og:description" content="An htop-style terminal UI for TCP/UDP ports — process, systemd unit and Docker container in one dashboard, with baseline drift detection, themes and remappable keys.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 256 256%22><rect width=%22256%22 height=%22256%22 rx=%2256%22 fill=%22%231a1409%22/><rect x=%2270%22 y=%2260%22 width=%2228%22 height=%2270%22 rx=%228%22 fill=%22%23ffb000%22/><rect x=%22158%22 y=%2260%22 width=%2228%22 height=%2270%22 rx=%228%22 fill=%22%23ffb000%22/><path d=%22M60 118h136v34a68 68 0 0 1-136 0z%22 fill=%22%23c98a2e%22/><rect x=%22116%22 y=%22182%22 width=%2224%22 height=%2240%22 rx=%226%22 fill=%22%23ffb000%22/></svg>">
 <style>
-  /*
-    Design: same one-committed-world approach as padovanl's other TUI
-    pages — an amber-phosphor terminal register, no light/dark branch,
-    because the product itself only exists as a dark terminal session.
-    Chrome (rounded "windows", inverse key chips, tab bar) borrows the
-    app's own lipgloss vocabulary; the mock terminal in the hero reuses
-    portop's actual state colors (green LISTEN, blue ESTABLISHED, amber
-    new-port dot) since it's demonstrating real product behavior.
-  */
+  /* Pages uses an amber terminal palette; the web and Cockpit dashboards have light and dark themes. */
   :root {
     --ink: #0c0a07;
     --ink-raised: #1a140b;
@@ -389,6 +381,7 @@
     <nav>
       <a href="#features">features</a>
       <a href="#web">web</a>
+      <a href="#cockpit">cockpit</a>
       <a href="#differentiators">beyond ss</a>
       <a href="#demo">screenshot</a>
       <a href="#install">install</a>
@@ -474,7 +467,11 @@
         </div>
         <div class="card">
           <h3><span class="dot state-new">◈</span>Local web dashboard</h3>
-          <p><code>portop --web</code> shows socket and process details in a dark local dashboard. Confirm before SIGTERM or SIGKILL. Pick a port with <code>--web-port</code>.</p>
+          <p><code>portop --web</code> shows socket and process details in a local dashboard with light and dark themes. Confirm before SIGTERM or SIGKILL. Pick a port with <code>--web-port</code>.</p>
+        </div>
+        <div class="card">
+          <h3><span class="dot state-established">◆</span>Cockpit add-on</h3>
+          <p>Inspect sockets and processes in Cockpit on Linux. Signal a process after confirmation, using your Cockpit user's permissions.</p>
         </div>
         <div class="card">
           <h3><span class="dot state-established">◆</span>Live settings screen</h3>
@@ -555,6 +552,18 @@
         </a>
       </div>
       <p class="demo-caption">Example data showing the web dashboard layout; actual sockets and available actions depend on your user permissions.</p>
+    </section>
+
+    <section id="cockpit" class="section">
+      <h2>Portop in Cockpit</h2>
+      <p class="section-lede">On Linux, the optional Cockpit page shows socket and process details inside your current session. Search, switch themes, and confirm SIGTERM or SIGKILL without starting a separate web server.</p>
+      <div class="feature-window">
+        <div class="term-titlebar"><span>Install the add-on</span><span class="chip"><span class="k">Cockpit</span></span></div>
+        <div class="feature-window-body">
+          <p>Install the portop binary on the host, then copy <code>cockpit/portop</code> to <code>~/.local/share/cockpit/portop</code>. Open Cockpit on port <code>9090</code> and select <strong>Tools → Ports (portop)</strong>.</p>
+          <p>See the <a href="https://github.com/padovanl/portop/blob/main/cockpit/README.md">step-by-step Cockpit instructions</a>. Socket visibility and process actions use your Cockpit user's permissions.</p>
+        </div>
+      </div>
     </section>
 
     <section id="demo" class="section">

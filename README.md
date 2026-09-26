@@ -447,7 +447,10 @@ choose another port; stop the server with Ctrl-C.
 
 The optional Cockpit page is in [`cockpit/portop`](cockpit/README.md). It lists
 ports and process details using the current Cockpit session. It can send
-SIGTERM or SIGKILL after confirmation and needs no separate web server.
+SIGTERM or SIGKILL after confirmation and needs no separate web server. On a
+Linux host, install the current portop binary and copy `cockpit/portop` into
+`~/.local/share/cockpit/portop`, then open **Tools → Ports (portop)**.
+See the [Cockpit setup steps](cockpit/README.md) for commands.
 
 ## 🤝 Contributing
 
