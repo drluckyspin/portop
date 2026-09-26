@@ -418,6 +418,13 @@ OS's config directory.
 
 ## Browser dashboard
 
+From this checkout, build and run the current development version:
+
+```bash
+go build -o ./bin/portop ./cmd/portop
+./bin/portop --web --web-port 8088
+```
+
 Run `portop --web` and open <http://127.0.0.1:8088>. The dashboard refreshes
 every two seconds and filters by port, address, process or PID. Choose another
 port with `portop --web --web-port 9090`. The server binds only to loopback;
@@ -426,6 +433,10 @@ it is read-only and stops with Ctrl-C. `--listen`, `--no-dns`, `--no-systemd`,
 option remains available for a specific loopback address.
 
 See the [dashboard screenshot](docs/assets/web-dashboard.png).
+
+To preview the GitHub Pages site locally, run `python3 scripts/serve-pages.py`
+from the checkout and open <http://127.0.0.1:8000/>. Use `--port 8001` to
+choose another port; stop the server with Ctrl-C.
 
 ## Cockpit add-on
 
