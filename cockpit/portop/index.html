@@ -3,22 +3,51 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>portop</title>
+  <title>portop · Ports</title>
   <link rel="stylesheet" href="portop.css">
   <script src="../base1/cockpit.js"></script>
   <script defer src="portop.js"></script>
 </head>
 <body>
-  <header>
-    <h1>Ports</h1>
-    <label>Filter <input id="filter" type="search" placeholder="Port, process, PID"></label>
-  </header>
-  <p id="status" role="status">Loading ports…</p>
-  <div class="table">
-    <table>
-      <thead><tr><th>Protocol</th><th>Local</th><th>State</th><th>PID</th><th>Process</th><th>Service</th></tr></thead>
-      <tbody id="rows"></tbody>
-    </table>
-  </div>
+  <main class="workspace">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">:</span>port<span>op</span></div>
+      <span class="live"><span class="live-dot" aria-hidden="true"></span>LIVE · COCKPIT</span>
+    </header>
+
+    <section class="intro" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">NETWORK / SOCKETS</p>
+        <h1 id="page-title">Ports<span>.</span></h1>
+        <p class="lede">Listening sockets and active connections on this host.</p>
+      </div>
+      <div class="stats" aria-label="Socket totals">
+        <div class="stat"><strong id="total-count">—</strong><span>SOCKETS</span></div>
+        <div class="stat"><strong id="listen-count">—</strong><span>LISTENING</span></div>
+        <div class="stat"><strong id="process-count">—</strong><span>PROCESSES</span></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Port activity">
+      <div class="toolbar">
+        <div class="panel-heading"><span class="panel-icon" aria-hidden="true">▦</span> Port activity <span id="visible-count" class="count">0</span></div>
+        <label class="search"><span aria-hidden="true">⌕</span><input id="filter" type="search" placeholder="Port, address, process or PID" autocomplete="off" aria-label="Filter ports"><kbd>/</kbd></label>
+      </div>
+      <div class="tabs" role="group" aria-label="Filter by state">
+        <button type="button" class="tab active" data-state="all" aria-pressed="true">All <span id="all-count">0</span></button>
+        <button type="button" class="tab" data-state="LISTEN" aria-pressed="false">Listening <span id="listening-count">0</span></button>
+        <button type="button" class="tab" data-state="ESTABLISHED" aria-pressed="false">Connected <span id="connected-count">0</span></button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>PORT / ADDRESS</th><th>PROTOCOL</th><th>STATE</th><th>PROCESS / PID</th><th>SERVICE / CONTAINER</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <p id="empty" class="empty" hidden>No ports match this view.</p>
+      </div>
+      <footer class="panel-footer"><span id="status" role="status">Connecting…</span><span>Refreshes every 2s · read only</span></footer>
+    </section>
+    <p class="footnote">Socket details depend on the permissions of your Cockpit user.</p>
+  </main>
 </body>
 </html>
