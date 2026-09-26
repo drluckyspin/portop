@@ -60,7 +60,7 @@ open, inspect or kill it, live.
 - **Scriptable**: `--json` prints a clean snapshot for piping into `jq`,
   dashboards, or your own tooling.
 - **Local web dashboard**: `--web` shows live ports in a browser, with search
-  and a compact read-only table.
+  and process details, with confirmed SIGTERM and SIGKILL actions.
 
 ### 🎨 Make it yours
 
@@ -425,12 +425,16 @@ go build -o ./bin/portop ./cmd/portop
 ./bin/portop --web --web-port 8088
 ```
 
-Run `portop --web` and open <http://127.0.0.1:8088>. The dashboard refreshes
-every two seconds and filters by port, address, process or PID. Choose another
-port with `portop --web --web-port 9090`. The server binds only to loopback;
-it is read-only and stops with Ctrl-C. `--listen`, `--no-dns`, `--no-systemd`,
-`--no-docker` and a positional filter also apply. The existing `--web-addr`
-option remains available for a specific loopback address.
+Run `portop --web` and open the URL it prints, including the action token in
+its fragment. The dashboard refreshes every two seconds and shows local and
+remote endpoints, process, CPU, systemd unit and container. **Details** adds
+command line, user, memory, threads and open files. Terminate (SIGTERM) and
+Force kill (SIGKILL) require confirmation and the process must still have the
+same start time. Without the printed token, the table remains readable but
+process details and signals are unavailable. Choose another port with
+`portop --web --web-port 9090`. The server binds only to loopback and stops
+with Ctrl-C. `--listen`, `--no-dns`, `--no-systemd`, `--no-docker` and a
+positional filter also apply. `--web-addr` selects a loopback address.
 
 See the [dashboard screenshot](docs/assets/web-dashboard.png).
 
@@ -441,7 +445,8 @@ choose another port; stop the server with Ctrl-C.
 ## Cockpit add-on
 
 The optional Cockpit page is in [`cockpit/portop`](cockpit/README.md). It lists
-ports using the current Cockpit session and needs no separate web server.
+ports and process details using the current Cockpit session. It can send
+SIGTERM or SIGKILL after confirmation and needs no separate web server.
 
 ## 🤝 Contributing
 

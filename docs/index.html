@@ -474,7 +474,7 @@
         </div>
         <div class="card">
           <h3><span class="dot state-new">◈</span>Local web dashboard</h3>
-          <p><code>portop --web</code> opens a live, searchable, read-only port table in your browser. Pick a port with <code>--web-port</code>.</p>
+          <p><code>portop --web</code> shows socket and process details in a dark local dashboard. Confirm before SIGTERM or SIGKILL. Pick a port with <code>--web-port</code>.</p>
         </div>
         <div class="card">
           <h3><span class="dot state-established">◆</span>Live settings screen</h3>
@@ -542,19 +542,19 @@
 
     <section id="web" class="section">
       <h2>Ports in your browser</h2>
-      <p class="section-lede">The same live socket data, in a small local dashboard. Search by port, address, process or PID. It refreshes every two seconds and only listens on your machine.</p>
+      <p class="section-lede">A compact view of local and remote endpoints, owners, CPU, systemd units and containers. Search, inspect the full process record, or confirm a signal. It refreshes every two seconds and listens only on your machine.</p>
       <div class="feature-window">
         <div class="term-titlebar"><span>Start the web dashboard</span><span class="chip"><span class="k">--web</span></span></div>
         <div class="feature-window-body">
-          <p><code>portop --web</code> → <code>http://127.0.0.1:8088</code><br><code>portop --web --web-port 9090</code> → <code>http://127.0.0.1:9090</code></p>
+          <p><code>portop --web</code> starts on port <code>8088</code>. Use <code>--web-port 9090</code> to change it. Open the URL printed in the terminal to enable process details and confirmed SIGTERM/SIGKILL actions.</p>
         </div>
       </div>
       <div class="demo-frame web-shot">
         <a href="assets/web-dashboard.png" aria-label="Open the full-size web dashboard screenshot">
-          <img src="assets/web-dashboard.png" width="1425" height="1289" alt="Portop web dashboard showing nine listening sockets, process owners where available, and live search" loading="lazy">
+          <img src="assets/web-dashboard.png" width="1440" height="950" alt="Portop dark web dashboard showing sample sockets, process owners, state filters and search" loading="lazy">
         </a>
       </div>
-      <p class="demo-caption">Captured from portop on Linux with <code>--listen</code>. Unknown owners reflect the current user's process permissions.</p>
+      <p class="demo-caption">Example data showing the web dashboard layout; actual sockets and available actions depend on your user permissions.</p>
     </section>
 
     <section id="demo" class="section">
