@@ -19,7 +19,8 @@ seconds. **Details** calls `portop --inspect-pid` for command line, user,
 executable, memory and other process information. Terminate and Force kill
 send SIGTERM and SIGKILL through `portop --signal-pid`, after confirmation and
 a check that the process start time has not changed. These actions use your
-Cockpit user's permissions. A row with no PID cannot be signaled.
+Cockpit user's permissions. A row with no PID cannot be signaled. The
+Light/Dark button remembers your choice in this browser.
 
 For a system-wide installation, copy `cockpit/portop` to
 `/usr/share/cockpit/portop`. If the bridge cannot find the `portop` binary,

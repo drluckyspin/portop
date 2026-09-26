@@ -431,7 +431,8 @@ remote endpoints, process, CPU, systemd unit and container. **Details** adds
 command line, user, memory, threads and open files. Terminate (SIGTERM) and
 Force kill (SIGKILL) require confirmation and the process must still have the
 same start time. Without the printed token, the table remains readable but
-process details and signals are unavailable. Choose another port with
+process details and signals are unavailable. The Light/Dark button remembers
+your choice in this browser. Choose another port with
 `portop --web --web-port 9090`. The server binds only to loopback and stops
 with Ctrl-C. `--listen`, `--no-dns`, `--no-systemd`, `--no-docker` and a
 positional filter also apply. `--web-addr` selects a loopback address.

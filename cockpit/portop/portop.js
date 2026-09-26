@@ -5,6 +5,24 @@
     const body = byId("rows");
     const filter = byId("filter");
     const dialog = byId("details");
+    const themeButton = byId("theme-toggle");
+    const themeKey = "portop-theme";
+    let theme = "dark";
+    try {
+        if (localStorage.getItem(themeKey) === "light") theme = "light";
+    } catch (_) {
+        // The switch still works if browser storage is unavailable.
+    }
+    function setTheme(value) {
+        theme = value;
+        document.documentElement.dataset.theme = value;
+        themeButton.textContent = value === "dark" ? "☀ Light" : "☾ Dark";
+        themeButton.setAttribute("aria-label", `Switch to ${value === "dark" ? "light" : "dark"} theme`);
+        document.querySelector('meta[name="theme-color"]').content = value === "dark" ? "#1a1b26" : "#e9eaf0";
+        try { localStorage.setItem(themeKey, value); } catch (_) { /* Storage is optional. */ }
+    }
+    setTheme(theme);
+    themeButton.addEventListener("click", () => setTheme(theme === "dark" ? "light" : "dark"));
     const tabs = [...document.querySelectorAll(".tab")];
     let rows = [];
     let selectedState = "all";
