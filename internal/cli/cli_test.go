@@ -11,9 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/padovanl/portop/internal/app"
 	"github.com/padovanl/portop/internal/baseline"
-	"github.com/padovanl/portop/internal/scanner"
 )
 
 func TestRunVersion(t *testing.T) {
@@ -337,22 +335,5 @@ func TestUnknownKeybindingActionFails(t *testing.T) {
 	}
 	if !strings.Contains(errOut.String(), "kil") {
 		t.Errorf("stderr = %q, want it to name the bad action", errOut.String())
-	}
-}
-
-func TestMatchesFilter(t *testing.T) {
-	row := app.Row{LocalPort: 8080, PID: 4242, ProcessName: "nginx", Protocol: scanner.TCP}
-	cases := map[string]bool{
-		"8080":  true,
-		"nginx": true,
-		"4242":  true,
-		"NGINX": true,
-		"9999":  false,
-		"redis": false,
-	}
-	for query, want := range cases {
-		if got := matchesFilter(row, query); got != want {
-			t.Errorf("matchesFilter(%q) = %v, want %v", query, got, want)
-		}
 	}
 }

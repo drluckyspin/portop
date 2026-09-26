@@ -1,9 +1,4 @@
-// Package docker associates a process with the Docker container that
-// owns it (via the process's cgroup) and looks up that container's name
-// through the Docker Engine API over its unix socket. No official SDK is
-// used: containers.json-ish info is fetched with a tiny hand-rolled
-// HTTP-over-unix-socket client to avoid pulling in a heavy dependency
-// for what is a handful of read-only calls.
+// Package docker reads container metadata from cgroups and the Docker socket.
 package docker
 
 import (
@@ -26,10 +21,7 @@ var ProcRoot = "/proc"
 // (e.g. to point at a fake HTTP-over-unix-socket server).
 var SocketPath = "/var/run/docker.sock"
 
-// containerIDPattern matches a 64-hex-char (or the shorter, still-valid
-// 12+ char) container ID appearing anywhere in a cgroup path segment,
-// which covers both cgroup v1 (".../docker/<id>") and cgroup v2 with
-// systemd-managed containers (".../docker-<id>.scope").
+// containerIDPattern matches full Docker IDs in cgroup paths.
 var containerIDPattern = regexp.MustCompile(`[0-9a-f]{64}`)
 
 // ContainerIDForPID returns the full container ID owning pid, or "" if

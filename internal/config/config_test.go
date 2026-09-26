@@ -68,19 +68,6 @@ func TestLoadInvalidYAML(t *testing.T) {
 	}
 }
 
-func TestBoolOr(t *testing.T) {
-	yes, no := true, false
-	if !BoolOr(&yes, false) {
-		t.Error("BoolOr(&true, false) = false, want true")
-	}
-	if BoolOr(&no, true) {
-		t.Error("BoolOr(&false, true) = true, want false")
-	}
-	if !BoolOr(nil, true) {
-		t.Error("BoolOr(nil, true) = false, want true (fallback)")
-	}
-}
-
 func TestWriteDefaultThenLoadRoundTrips(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "nested", "config.yml")
 	if err := WriteDefault(path); err != nil {

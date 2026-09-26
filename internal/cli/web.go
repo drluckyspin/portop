@@ -52,7 +52,7 @@ func webHandler(collect func(context.Context, app.Options) ([]app.Row, error), f
 			if listenOnly && row.State != scanner.StateListen {
 				continue
 			}
-			if filter != "" && !matchesFilter(row, filter) {
+			if !row.Matches(filter) {
 				continue
 			}
 			out = append(out, toJSONRow(row))

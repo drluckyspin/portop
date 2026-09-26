@@ -1,6 +1,4 @@
-// Package app wires together the scanner, docker, systemd, dns and cpu
-// packages into the enriched rows the UI (and --json mode) display, and
-// holds the CLI-level configuration for a run.
+// Package app collects sockets and enriches them with process metadata.
 package app
 
 import (
@@ -8,6 +6,7 @@ import (
 	"net"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/padovanl/portop/internal/dnscache"
@@ -31,16 +30,27 @@ type Row struct {
 	CPUPercent    float64
 	SystemdUnit   string
 	ContainerName string
-	FirstSeen     bool // true if this socket was not present in the previous scan (see Collector.baseline)
+	FirstSeen     bool // true if this socket was absent from the previous scan
 }
 
-// Key uniquely identifies a socket across scans, for CPU sampling and new
-// port detection: protocol/local address/local port is sufficient since
-// the kernel guarantees only one listener per (proto, addr, port) and we
-// key established connections the same way, accepting that a very fast
-// connect/disconnect cycle on the same 4-tuple within one refresh
-// interval could be conflated. That's an acceptable trade-off for a
-// monitoring UI refreshing multiple times a second.
+// Matches reports whether a row contains the search text used by the TUI,
+// JSON output, and web dashboard.
+func (r Row) Matches(query string) bool {
+	query = strings.ToLower(strings.TrimSpace(query))
+	if query == "" {
+		return true
+	}
+	return strings.Contains(strconv.Itoa(int(r.LocalPort)), query) ||
+		strings.Contains(strconv.Itoa(r.PID), query) ||
+		strings.Contains(strings.ToLower(r.ProcessName), query) ||
+		strings.Contains(strings.ToLower(r.SystemdUnit), query) ||
+		strings.Contains(strings.ToLower(r.ContainerName), query) ||
+		strings.Contains(strings.ToLower(r.LocalAddr.String()), query) ||
+		(r.RemotePort != 0 && strings.Contains(strings.ToLower(r.RemoteAddr.String()), query))
+}
+
+// Key identifies a socket by protocol and endpoints across scans.
+// Sockets sharing the same endpoints can map to the same key.
 type Key struct {
 	Protocol scanner.Protocol
 	Local    string
@@ -78,10 +88,7 @@ func NewCollector() *Collector {
 
 const defaultDNSTimeout = 800 * time.Millisecond
 
-// Options configures what a Collect call resolves. Resolving systemd/
-// Docker/DNS info touches the filesystem and network per row, so callers
-// that just want a fast snapshot (e.g. --json without --enrich) can skip
-// them.
+// Options controls the metadata resolved during a scan.
 type Options struct {
 	ResolveSystemd bool
 	ResolveDocker  bool

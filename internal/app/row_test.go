@@ -78,3 +78,20 @@ func findRow(rows []Row, port uint16) *Row {
 	}
 	return nil
 }
+
+func TestRowMatches(t *testing.T) {
+	row := Row{
+		LocalAddr: net.ParseIP("127.0.0.1"), LocalPort: 8080,
+		RemoteAddr: net.ParseIP("203.0.113.4"), RemotePort: 443,
+		PID: 4242, ProcessName: "nginx", SystemdUnit: "nginx.service", ContainerName: "frontend",
+	}
+	for query, want := range map[string]bool{
+		"": true, "8080": true, "NGINX": true, "4242": true,
+		"127.0.0.1": true, "203.0.113.4": true, "service": true,
+		"frontend": true, "redis": false,
+	} {
+		if got := row.Matches(query); got != want {
+			t.Errorf("Matches(%q) = %v, want %v", query, got, want)
+		}
+	}
+}

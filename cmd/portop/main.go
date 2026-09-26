@@ -1,5 +1,4 @@
-// Command portop is a terminal UI showing which processes are really
-// using your TCP/UDP ports — like htop, but for ports.
+// Command portop shows the processes using TCP and UDP ports.
 package main
 
 import (

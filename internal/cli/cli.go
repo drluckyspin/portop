@@ -1,7 +1,4 @@
-// Package cli parses portop's command-line interface and dispatches to
-// either the interactive TUI or the non-interactive --json snapshot
-// mode. It is kept separate from cmd/portop/main.go so it can be
-// exercised by tests without spawning a real process.
+// Package cli parses flags and runs the TUI, web server, or snapshot commands.
 package cli
 
 import (
@@ -241,12 +238,14 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	return 0
 }
 
-func runJSON(stdout, stderr io.Writer, filter string, listenOnly bool, opts app.Options) int {
-	collector := app.NewCollector()
+func collectRows(opts app.Options) ([]app.Row, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+	return app.NewCollector().Collect(ctx, opts)
+}
 
-	rows, err := collector.Collect(ctx, opts)
+func runJSON(stdout, stderr io.Writer, filter string, listenOnly bool, opts app.Options) int {
+	rows, err := collectRows(opts)
 	if err != nil {
 		fmt.Fprintln(stderr, "portop: "+err.Error())
 		return 1
@@ -257,7 +256,7 @@ func runJSON(stdout, stderr io.Writer, filter string, listenOnly bool, opts app.
 		if listenOnly && r.State != scanner.StateListen {
 			continue
 		}
-		if filter != "" && !matchesFilter(r, filter) {
+		if !r.Matches(filter) {
 			continue
 		}
 		out = append(out, toJSONRow(r))
@@ -277,11 +276,7 @@ func runSaveBaseline(stdout, stderr io.Writer, path string, opts app.Options) in
 		fmt.Fprintln(stderr, "portop: could not determine a baseline path (try --baseline-path)")
 		return 1
 	}
-	collector := app.NewCollector()
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	rows, err := collector.Collect(ctx, opts)
+	rows, err := collectRows(opts)
 	if err != nil {
 		fmt.Fprintln(stderr, "portop: "+err.Error())
 		return 1
@@ -316,10 +311,7 @@ func runDiffBaseline(stdout, stderr io.Writer, path string, jsonOut bool, opts a
 		return 1
 	}
 
-	collector := app.NewCollector()
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	rows, err := collector.Collect(ctx, opts)
+	rows, err := collectRows(opts)
 	if err != nil {
 		fmt.Fprintln(stderr, "portop: "+err.Error())
 		return 1
@@ -331,11 +323,14 @@ func runDiffBaseline(stdout, stderr io.Writer, path string, jsonOut bool, opts a
 	if jsonOut {
 		enc := json.NewEncoder(stdout)
 		enc.SetIndent("", "  ")
-		_ = enc.Encode(struct {
+		if err := enc.Encode(struct {
 			BaselineSavedAt string           `json:"baseline_saved_at"`
 			Added           []baseline.Entry `json:"added"`
 			Removed         []baseline.Entry `json:"removed"`
-		}{BaselineSavedAt: savedAt.Format(time.RFC3339), Added: orEmpty(added), Removed: orEmpty(removed)})
+		}{BaselineSavedAt: savedAt.Format(time.RFC3339), Added: orEmpty(added), Removed: orEmpty(removed)}); err != nil {
+			fmt.Fprintln(stderr, "portop: "+err.Error())
+			return 1
+		}
 	} else {
 		fmt.Fprintf(stdout, "baseline saved %s (%d ports)\n", savedAt.Format("2006-01-02 15:04:05"), len(saved))
 		if len(added) == 0 && len(removed) == 0 {
@@ -437,20 +432,6 @@ func orEmpty(e []baseline.Entry) []baseline.Entry {
 		return []baseline.Entry{}
 	}
 	return e
-}
-
-func matchesFilter(r app.Row, filter string) bool {
-	filter = strings.ToLower(filter)
-	if strings.Contains(strconv.Itoa(int(r.LocalPort)), filter) {
-		return true
-	}
-	if strings.Contains(strings.ToLower(r.ProcessName), filter) {
-		return true
-	}
-	if strings.Contains(strconv.Itoa(r.PID), filter) {
-		return true
-	}
-	return false
 }
 
 type jsonRow struct {

@@ -11,10 +11,6 @@ import (
 	"github.com/padovanl/portop/internal/services"
 )
 
-func sortRows(rows []app.Row, mode sortMode) {
-	sortRowsDirection(rows, mode, defaultSortDescending(mode))
-}
-
 func defaultSortDescending(mode sortMode) bool { return mode == sortByCPU }
 
 func sortRowsDirection(rows []app.Row, mode sortMode, descending bool) {
@@ -83,13 +79,7 @@ type column struct {
 // whether or not a given row has a marker.
 const markerWidth = 2
 
-// columnsFor picks which columns to display for the given terminal
-// width: the core columns (port through CPU%) always fit even in a
-// narrow 80-column terminal, and REMOTE/CONTAINER/SYSTEMD are added
-// back in, most-useful-first, only as space allows — rather than
-// letting rows overflow the box and wrap mid-line. CONTAINER comes
-// before SYSTEMD since Docker's a lot more common in day-to-day port
-// debugging than needing the systemd unit name.
+// columnsFor adds optional columns while they fit the terminal width.
 func columnsFor(showEstablished bool, width int) []column {
 	core := []column{
 		{"PORT", 11},
