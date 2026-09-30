@@ -1,6 +1,4 @@
-<img src="docs/assets/logo.png" alt="" width="80" align="right">
-
-# portop 🔌
+# <img src="docs/assets/logo.png" alt="" width="40" align="absmiddle"> portop
 
 [![CI](https://github.com/padovanl/portop/actions/workflows/ci.yml/badge.svg)](https://github.com/padovanl/portop/actions/workflows/ci.yml)
 [![Release](https://github.com/padovanl/portop/actions/workflows/release.yml/badge.svg)](https://github.com/padovanl/portop/actions/workflows/release.yml)
