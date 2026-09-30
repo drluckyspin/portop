@@ -14,16 +14,12 @@ open, inspect or kill it, live.
 
 **[padovanl.github.io/portop →](https://padovanl.github.io/portop/)**
 
-[Features](#-features) ·
-[Why portop](#-why-not-just-ss--tlnp) ·
-[Installation](#-installation) ·
-[Usage](#%EF%B8%8F-usage) ·
-[Configuration](#%EF%B8%8F-configuration) ·
-[Web dashboard](#-web-dashboard) ·
-[Cockpit add-on](#%EF%B8%8F-cockpit-add-on) ·
-[How it works](#-how-it-works) ·
-[Requirements](#-requirements) ·
-[Contributing](#-contributing)
+| Get started | Day to day | Beyond the terminal |
+|:--|:--|:--|
+| ✨ [Features](#-features) | ⌨️ [Usage](#%EF%B8%8F-usage) | 🌐 [Web dashboard](#-web-dashboard) |
+| 🆚 [Why not just `ss`?](#-why-not-just-ss--tlnp) | 🎹 [Keybindings](#keybindings) | 🔐 [Dashboard sign-in](#sign-in) |
+| 📥 [Installation](#-installation) | ⚙️ [Configuration](#%EF%B8%8F-configuration) | 🖥️ [Cockpit add-on](#%EF%B8%8F-cockpit-add-on) |
+| ✅ [Requirements](#-requirements) | 🔧 [How it works](#-how-it-works) | 🤝 [Contributing](#-contributing) |
 
 ![portop demo: filtering to a port, viewing process details, the kill confirmation, and the help overlay](docs/assets/demo.gif)
 *Filtering to a port, checking who owns it, and the confirm-before-kill flow — all in real time.*
