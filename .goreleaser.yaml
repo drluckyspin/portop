@@ -74,13 +74,26 @@ changelog:
   sort: asc
   filters:
     exclude:
-      - "^test:"
-      - "^ci:"
-      - "^chore:"
+      - "^Merge pull request"
+      - "^Merge branch"
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\(.+\))??!?:.+$'
+      order: 0
+    - title: Fixes
+      regexp: '^.*?fix(\(.+\))??!?:.+$'
+      order: 1
+    - title: Other changes
+      order: 999
 
 release:
   github:
     owner: padovanl
     name: portop
+  name_template: "portop {{ .Tag }}"
+  # scripts/release.sh stores the release notes in the annotated tag's
+  # message body; they go above the generated changelog.
+  header: |
+    {{ .TagBody }}
   draft: false
   prerelease: auto

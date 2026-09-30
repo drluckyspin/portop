@@ -88,7 +88,7 @@ func TestRefilterQueryMatchesPortOrProcess(t *testing.T) {
 
 func TestSortRowsByCPUDescending(t *testing.T) {
 	rows := sampleRows()[:3] // three LISTEN rows with distinct CPU%
-	sortRows(rows, sortByCPU)
+	sortRowsDirection(rows, sortByCPU, defaultSortDescending(sortByCPU))
 	for i := 1; i < len(rows); i++ {
 		if rows[i-1].CPUPercent < rows[i].CPUPercent {
 			t.Errorf("rows not sorted by CPU descending: %v before %v", rows[i-1].CPUPercent, rows[i].CPUPercent)
@@ -98,7 +98,7 @@ func TestSortRowsByCPUDescending(t *testing.T) {
 
 func TestSortRowsByPort(t *testing.T) {
 	rows := sampleRows()[:3]
-	sortRows(rows, sortByPort)
+	sortRowsDirection(rows, sortByPort, defaultSortDescending(sortByPort))
 	for i := 1; i < len(rows); i++ {
 		if rows[i-1].LocalPort > rows[i].LocalPort {
 			t.Errorf("rows not sorted by port ascending")

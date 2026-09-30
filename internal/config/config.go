@@ -1,7 +1,4 @@
-// Package config loads portop's optional config.yml: default flag
-// values, the color theme, and keybinding overrides. The file is
-// entirely opt-in — nothing in this package is required for portop to
-// run with its built-in defaults.
+// Package config loads and saves portop settings.
 package config
 
 import (
@@ -53,10 +50,7 @@ func Load(path string) (Config, error) {
 	return cfg, nil
 }
 
-// Save writes cfg to path as YAML, creating parent directories as
-// needed. Used by the in-app settings screen (`,`) so a live change
-// (theme, a rebound key) survives a restart without the user ever
-// having to open the file themselves.
+// Save writes cfg as YAML, creating parent directories as needed.
 func Save(path string, cfg Config) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
@@ -66,15 +60,6 @@ func Save(path string, cfg Config) error {
 		return err
 	}
 	return os.WriteFile(path, data, 0o644)
-}
-
-// BoolOr returns *p if set, otherwise fallback — used to let config.yml
-// supply a flag's default while still letting the flag itself override.
-func BoolOr(p *bool, fallback bool) bool {
-	if p == nil {
-		return fallback
-	}
-	return *p
 }
 
 // WriteDefault writes a fully-commented example config.yml to path,
@@ -120,7 +105,6 @@ const defaultConfigTemplate = `# portop config.yml
 #   kill: ["x"]
 #   quit: ["q", "ctrl+c"]
 #
-# You don't need to hand-edit this section at all, though: press "," in
-# the app to open Settings, where themes and keys can be changed live —
-# portop keeps this file in sync with whatever you pick there.
+# Press "," in the app to change themes and keys from Settings.
+# Those changes are saved here.
 `

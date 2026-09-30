@@ -56,14 +56,25 @@ To ship a release:
 # 1. Open a PR from develop into main, wait for CI to go green, merge it.
 git checkout main && git pull
 
-# 2. Tag and push — this is the only step that actually triggers a release.
-scripts/release.sh vX.Y.Z
+# 2. Optional: write the release notes. release-notes/ is gitignored.
+$EDITOR release-notes/vX.Y.Z.md
+
+# 3. Tag and push — this is the only step that actually triggers a release.
+scripts/release.sh vX.Y.Z            # picks up release-notes/vX.Y.Z.md
+scripts/release.sh vX.Y.Z --notes path/to/notes.md
 ```
+
+The notes are stored in the annotated tag's message, not in a commit. The
+release workflow publishes them at the top of the GitHub release, followed
+by the commits since the previous tag, grouped into features, fixes and
+other changes. A leading `# title` line in the notes file is dropped
+because the release is already named `portop vX.Y.Z`. Without a notes file
+the release lists commits only.
 
 `scripts/release.sh` refuses to run unless you're on `main`, the working
 tree is clean, local `main` matches `origin/main`, and the tag doesn't
-already exist locally or on the remote — then it tags and pushes after a
-confirmation prompt. That push triggers the [release
+already exist locally or on the remote — then it shows the notes, and tags
+and pushes after a confirmation prompt. That push triggers the [release
 workflow](.github/workflows/release.yml), which independently re-checks
 the tag is reachable from `main` (so there's no way to accidentally ship
 a tag that skipped the PR) before building the `.deb`/`.rpm`/`.tar.gz` artifacts

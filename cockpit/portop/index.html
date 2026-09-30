@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1a1b26">
+  <title>portop · Ports</title>
+  <link rel="stylesheet" href="portop.css">
+  <script src="../base1/cockpit.js"></script>
+  <script defer src="portop.js"></script>
+</head>
+<body>
+  <main class="workspace">
+    <header class="topbar">
+      <div class="brand"><img class="brand-logo" src="logo.png" alt="" width="26" height="26">port<span>op</span><small>/ ports</small></div>
+      <div class="top-actions"><span class="mode"><span class="live-dot" aria-hidden="true"></span>COCKPIT · LIVE</span><button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch to light theme">☀ Light</button></div>
+    </header>
+
+    <section class="overview" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">SOCKET MONITOR</p>
+        <h1 id="page-title">Ports</h1>
+        <p class="lede">Local and remote endpoints, owners, and process details.</p>
+      </div>
+      <div class="stats" aria-label="Socket totals">
+        <div><strong id="total-count">—</strong><span>SOCKETS</span></div>
+        <div><strong id="listen-count">—</strong><span>LISTENING</span></div>
+        <div><strong id="process-count">—</strong><span>PROCESSES</span></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Port activity">
+      <div class="toolbar">
+        <div class="tabs" role="group" aria-label="Filter by state">
+          <button type="button" class="tab active" data-state="all" aria-pressed="true">All <span id="all-count">0</span></button>
+          <button type="button" class="tab" data-state="LISTEN" aria-pressed="false">Listening <span id="listening-count">0</span></button>
+          <button type="button" class="tab" data-state="ESTABLISHED" aria-pressed="false">Connected <span id="connected-count">0</span></button>
+        </div>
+        <label class="search"><span aria-hidden="true">⌕</span><input id="filter" type="search" placeholder="Port, address, process…" autocomplete="off" aria-label="Filter ports"><kbd>/</kbd></label>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>LOCAL / PORT</th><th>REMOTE</th><th>STATE</th><th>PROCESS / PID</th><th>CPU</th><th>UNIT / CONTAINER</th><th><span class="sr-only">Details</span></th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <p id="empty" class="empty" hidden>No sockets match this view.</p>
+      </div>
+      <footer class="panel-footer"><span id="status" role="status">Connecting…</span><span><span id="visible-count">0</span> shown · refreshes every 2s</span></footer>
+    </section>
+    <p class="footnote">Process information depends on your Cockpit permissions. Click Details for the full record.</p>
+  </main>
+
+  <dialog id="details" aria-labelledby="detail-title">
+    <div class="dialog-head"><div><p class="eyebrow">SOCKET DETAIL</p><h2 id="detail-title">Port</h2></div><button type="button" id="close-details" class="icon-button" aria-label="Close details">×</button></div>
+    <div class="dialog-body">
+      <section><h3>Connection</h3><dl id="socket-fields" class="fields"></dl></section>
+      <section><h3>Process</h3><p id="process-status" class="muted">Loading…</p><dl id="process-fields" class="fields"></dl></section>
+    </div>
+    <div id="confirm-action" class="confirm" hidden><p id="confirm-text"></p><div><button type="button" id="cancel-action" class="button">Cancel</button><button type="button" id="confirm-button" class="button danger">Confirm</button></div></div>
+    <footer class="dialog-footer"><span id="action-status" role="status"></span><div><button type="button" id="terminate" class="button danger" disabled>Terminate</button><button type="button" id="force-kill" class="button" disabled>Force kill</button></div></footer>
+  </dialog>
+</body>
+</html>

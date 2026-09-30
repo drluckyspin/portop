@@ -294,21 +294,10 @@ func orDash(s string) string {
 	return s
 }
 
-// overlay composites `modal` on top of `base`, centered, by replacing
-// whichever base lines it covers outright. Bubble Tea has no built-in
-// popup/layer primitive; the earlier approach of appending the modal
-// below the base view made the total frame taller than the base view
-// (and often taller than the terminal itself, since the base view is
-// already sized to fill it), which is a plausible cause of the render
-// glitches some terminals show when a frame exceeds their height. This
-// version never produces more lines than `base` already has.
+// overlay centers a modal within the terminal-sized base view.
 func overlay(base, modal string, width, height int) string {
 	baseLines := strings.Split(base, "\n")
-	// The base view can render shorter than the terminal (e.g. a short
-	// socket list leaves the table nowhere near full height) — pad it
-	// out to the real canvas size first, so a modal taller than the
-	// *current* base view still has the *terminal's* actual room to
-	// work with instead of being silently clipped.
+	// Pad short tables so the modal still uses the full terminal height.
 	for len(baseLines) < height {
 		baseLines = append(baseLines, "")
 	}

@@ -2,7 +2,6 @@ package ui
 
 import (
 	"strconv"
-	"strings"
 
 	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/key"
@@ -172,12 +171,7 @@ func (m Model) handleHelpKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// handleSettingsKey drives the "," settings screen: ↑/↓ move between the
-// theme row, one row per remappable action, and a "reset" row; ←/→ on
-// the theme row cycles the live palette; enter on an action row starts
-// "press a key" capture (any next key becomes that action's new
-// binding, esc cancels); enter on the reset row restores every default
-// keybinding. Every committed change is persisted immediately.
+// handleSettingsKey updates the theme and keybindings in the settings view.
 func (m Model) handleSettingsKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.settingsCapturing {
 		pressed := msg.String()
@@ -234,7 +228,7 @@ func (m Model) handleSettingsKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 // refilter recomputes m.filtered from m.rows given the current filter
 // text, protocol/state toggles and sort mode, and clamps the cursor.
 func (m *Model) refilter() {
-	query := strings.ToLower(strings.TrimSpace(m.filterInput.Value()))
+	query := m.filterInput.Value()
 
 	out := make([]app.Row, 0, len(m.rows))
 	for _, r := range m.rows {
@@ -247,7 +241,7 @@ func (m *Model) refilter() {
 		if m.ipFilter == ipv6Only && !r.IPv6 {
 			continue
 		}
-		if query != "" && !rowMatches(r, query) {
+		if !r.Matches(query) {
 			continue
 		}
 		out = append(out, r)
@@ -276,23 +270,4 @@ func (m *Model) moveCursor(delta int) {
 	}
 	m.cursor = min(max(m.cursor+delta, 0), len(m.filtered)-1)
 	m.normalizeViewport()
-}
-
-func rowMatches(r app.Row, query string) bool {
-	if strings.Contains(strconv.Itoa(int(r.LocalPort)), query) {
-		return true
-	}
-	if strings.Contains(strconv.Itoa(r.PID), query) {
-		return true
-	}
-	if strings.Contains(strings.ToLower(r.ProcessName), query) {
-		return true
-	}
-	if strings.Contains(strings.ToLower(r.SystemdUnit), query) {
-		return true
-	}
-	if strings.Contains(strings.ToLower(r.ContainerName), query) {
-		return true
-	}
-	return false
 }

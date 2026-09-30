@@ -1,7 +1,4 @@
-// Package cli parses portop's command-line interface and dispatches to
-// either the interactive TUI or the non-interactive --json snapshot
-// mode. It is kept separate from cmd/portop/main.go so it can be
-// exercised by tests without spawning a real process.
+// Package cli parses flags and runs the TUI, web server, or snapshot commands.
 package cli
 
 import (
@@ -10,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -21,6 +19,7 @@ import (
 	"github.com/padovanl/portop/internal/baseline"
 	"github.com/padovanl/portop/internal/compose"
 	"github.com/padovanl/portop/internal/config"
+	"github.com/padovanl/portop/internal/procinfo"
 	"github.com/padovanl/portop/internal/scanner"
 	"github.com/padovanl/portop/internal/ui"
 )
@@ -40,6 +39,12 @@ Usage:
                            (exit code 3 if something changed — handy in
                            a cron job or systemd timer)
   portop --compose DIR     audit published ports from a Docker Compose folder
+  portop --web             serve a local dashboard at http://127.0.0.1:8088
+  portop --web --web-port 9090  choose the dashboard port
+  portop --web --web-auth       require sign-in (password printed if not set)
+  portop --web --web-user admin --web-password secret --web-addr 0.0.0.0:8088
+                           sign in with your own credentials; reachable
+                           from other machines (add --web-tls-cert/-key)
   portop --init-config     write a default config.yml and exit
 
 config.yml (optional, see --init-config) sets default flag values, the
@@ -62,6 +67,14 @@ func Run(args []string, stdout, stderr io.Writer) int {
 
 	listenOnly := fs.Bool("listen", false, "show only sockets in LISTEN state")
 	jsonMode := fs.Bool("json", false, "print a JSON snapshot and exit (non-interactive)")
+	webMode := fs.Bool("web", false, "serve a local web dashboard")
+	webPort := fs.Int("web-port", 8088, "web dashboard port (loopback only)")
+	webAddr := fs.String("web-addr", "127.0.0.1:8088", "web dashboard listen address (loopback only unless --web-auth is set)")
+	webAuthOn := fs.Bool("web-auth", false, "require a username and password to open the web dashboard")
+	webUser := fs.String("web-user", "portop", "web dashboard username (implies --web-auth)")
+	webPassword := fs.String("web-password", "", "web dashboard password (implies --web-auth; default: $PORTOP_WEB_PASSWORD, or generated and printed)")
+	webTLSCert := fs.String("web-tls-cert", "", "serve the web dashboard over HTTPS with this PEM certificate")
+	webTLSKey := fs.String("web-tls-key", "", "PEM private key for --web-tls-cert")
 	noDNS := fs.Bool("no-dns", false, "disable reverse DNS lookups on ESTABLISHED connections")
 	noSystemd := fs.Bool("no-systemd", false, "disable systemd unit association")
 	noDocker := fs.Bool("no-docker", false, "disable Docker container association")
@@ -74,6 +87,10 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	composeDir := fs.String("compose", "", "audit published ports from a Docker Compose project directory")
 	configPath := fs.String("config", "", "config file path (default: OS config dir)/portop/config.yml")
 	initConfig := fs.Bool("init-config", false, "write a default config.yml and exit")
+	inspectPID := fs.Int("inspect-pid", 0, "print process details as JSON")
+	signalPID := fs.Int("signal-pid", 0, "signal a process after checking its start time")
+	expectedStart := fs.String("expected-start", "", "start time from --inspect-pid")
+	forceSignal := fs.Bool("force", false, "use SIGKILL with --signal-pid instead of SIGTERM")
 
 	// The stdlib flag package stops parsing at the first non-flag
 	// argument, which would break "portop 8080 --json" (flag package
@@ -182,6 +199,26 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	}
 	ui.ApplyKeyBindings(fileCfg.Keybindings)
 
+	if *inspectPID != 0 {
+		info, err := procinfo.Load(*inspectPID)
+		if err != nil {
+			fmt.Fprintln(stderr, "portop: "+err.Error())
+			return 1
+		}
+		if err := json.NewEncoder(stdout).Encode(info); err != nil {
+			fmt.Fprintln(stderr, "portop: "+err.Error())
+			return 1
+		}
+		return 0
+	}
+	if *signalPID != 0 {
+		if err := signalProcess(*signalPID, *expectedStart, *forceSignal); err != nil {
+			fmt.Fprintln(stderr, "portop: "+err.Error())
+			return 1
+		}
+		return 0
+	}
+
 	filter := strings.Join(positional, " ")
 
 	opts := app.Options{
@@ -198,6 +235,19 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	}
 
 	switch {
+	case *webMode:
+		serve, err := webServeOptions(webFlags{
+			addr: *webAddr, port: *webPort, addrSet: explicit["web-addr"], portSet: explicit["web-port"],
+			auth: *webAuthOn, authSet: explicit["web-auth"],
+			user: *webUser, userSet: explicit["web-user"],
+			password: *webPassword, passwordSet: explicit["web-password"], passwordEnv: os.Getenv("PORTOP_WEB_PASSWORD"),
+			tlsCert: *webTLSCert, tlsKey: *webTLSKey,
+		})
+		if err != nil {
+			fmt.Fprintln(stderr, "portop: "+err.Error())
+			return 2
+		}
+		return runWeb(stdout, stderr, serve, webConfig{Filter: filter, ListenOnly: *listenOnly, Options: opts})
 	case *composeDir != "":
 		return runComposeAudit(stdout, stderr, *composeDir, *jsonMode, opts)
 	case *saveBaseline:
@@ -229,12 +279,14 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	return 0
 }
 
-func runJSON(stdout, stderr io.Writer, filter string, listenOnly bool, opts app.Options) int {
-	collector := app.NewCollector()
+func collectRows(opts app.Options) ([]app.Row, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+	return app.NewCollector().Collect(ctx, opts)
+}
 
-	rows, err := collector.Collect(ctx, opts)
+func runJSON(stdout, stderr io.Writer, filter string, listenOnly bool, opts app.Options) int {
+	rows, err := collectRows(opts)
 	if err != nil {
 		fmt.Fprintln(stderr, "portop: "+err.Error())
 		return 1
@@ -245,7 +297,7 @@ func runJSON(stdout, stderr io.Writer, filter string, listenOnly bool, opts app.
 		if listenOnly && r.State != scanner.StateListen {
 			continue
 		}
-		if filter != "" && !matchesFilter(r, filter) {
+		if !r.Matches(filter) {
 			continue
 		}
 		out = append(out, toJSONRow(r))
@@ -265,11 +317,7 @@ func runSaveBaseline(stdout, stderr io.Writer, path string, opts app.Options) in
 		fmt.Fprintln(stderr, "portop: could not determine a baseline path (try --baseline-path)")
 		return 1
 	}
-	collector := app.NewCollector()
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	rows, err := collector.Collect(ctx, opts)
+	rows, err := collectRows(opts)
 	if err != nil {
 		fmt.Fprintln(stderr, "portop: "+err.Error())
 		return 1
@@ -304,10 +352,7 @@ func runDiffBaseline(stdout, stderr io.Writer, path string, jsonOut bool, opts a
 		return 1
 	}
 
-	collector := app.NewCollector()
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	rows, err := collector.Collect(ctx, opts)
+	rows, err := collectRows(opts)
 	if err != nil {
 		fmt.Fprintln(stderr, "portop: "+err.Error())
 		return 1
@@ -319,11 +364,14 @@ func runDiffBaseline(stdout, stderr io.Writer, path string, jsonOut bool, opts a
 	if jsonOut {
 		enc := json.NewEncoder(stdout)
 		enc.SetIndent("", "  ")
-		_ = enc.Encode(struct {
+		if err := enc.Encode(struct {
 			BaselineSavedAt string           `json:"baseline_saved_at"`
 			Added           []baseline.Entry `json:"added"`
 			Removed         []baseline.Entry `json:"removed"`
-		}{BaselineSavedAt: savedAt.Format(time.RFC3339), Added: orEmpty(added), Removed: orEmpty(removed)})
+		}{BaselineSavedAt: savedAt.Format(time.RFC3339), Added: orEmpty(added), Removed: orEmpty(removed)}); err != nil {
+			fmt.Fprintln(stderr, "portop: "+err.Error())
+			return 1
+		}
 	} else {
 		fmt.Fprintf(stdout, "baseline saved %s (%d ports)\n", savedAt.Format("2006-01-02 15:04:05"), len(saved))
 		if len(added) == 0 && len(removed) == 0 {
@@ -425,20 +473,6 @@ func orEmpty(e []baseline.Entry) []baseline.Entry {
 		return []baseline.Entry{}
 	}
 	return e
-}
-
-func matchesFilter(r app.Row, filter string) bool {
-	filter = strings.ToLower(filter)
-	if strings.Contains(strconv.Itoa(int(r.LocalPort)), filter) {
-		return true
-	}
-	if strings.Contains(strings.ToLower(r.ProcessName), filter) {
-		return true
-	}
-	if strings.Contains(strconv.Itoa(r.PID), filter) {
-		return true
-	}
-	return false
 }
 
 type jsonRow struct {

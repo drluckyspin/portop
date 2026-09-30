@@ -4,20 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>portop</title>
-<meta name="description" content="portop is an htop-style terminal UI for TCP/UDP ports on Linux and macOS. Find the owning process, inspect it, or stop it. Linux packages include DEB and RPM.">
+<meta name="description" content="portop is an htop-style terminal UI for TCP/UDP ports on Linux and macOS, with a web dashboard and a Cockpit add-on. Find the owning process, inspect it, or stop it.">
 <meta property="og:title" content="portop">
+<meta property="og:image" content="https://padovanl.github.io/portop/assets/logo.png">
 <meta property="og:description" content="An htop-style terminal UI for TCP/UDP ports — process, systemd unit and Docker container in one dashboard, with baseline drift detection, themes and remappable keys.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 256 256%22><rect width=%22256%22 height=%22256%22 rx=%2256%22 fill=%22%231a1409%22/><rect x=%2270%22 y=%2260%22 width=%2228%22 height=%2270%22 rx=%228%22 fill=%22%23ffb000%22/><rect x=%22158%22 y=%2260%22 width=%2228%22 height=%2270%22 rx=%228%22 fill=%22%23ffb000%22/><path d=%22M60 118h136v34a68 68 0 0 1-136 0z%22 fill=%22%23c98a2e%22/><rect x=%22116%22 y=%22182%22 width=%2224%22 height=%2240%22 rx=%226%22 fill=%22%23ffb000%22/></svg>">
+<link rel="icon" href="assets/logo.png">
 <style>
-  /*
-    Design: same one-committed-world approach as padovanl's other TUI
-    pages — an amber-phosphor terminal register, no light/dark branch,
-    because the product itself only exists as a dark terminal session.
-    Chrome (rounded "windows", inverse key chips, tab bar) borrows the
-    app's own lipgloss vocabulary; the mock terminal in the hero reuses
-    portop's actual state colors (green LISTEN, blue ESTABLISHED, amber
-    new-port dot) since it's demonstrating real product behavior.
-  */
+  /* Pages uses an amber terminal palette; the web and Cockpit dashboards have light and dark themes. */
   :root {
     --ink: #0c0a07;
     --ink-raised: #1a140b;
@@ -289,6 +282,8 @@
     margin-bottom: 14px;
   }
   .demo-frame img { display: block; width: 100%; height: auto; }
+  .window-shot { display: block; border-bottom: 1px solid var(--hairline); }
+  .window-shot img { display: block; width: 100%; height: auto; }
   .demo-caption { color: var(--rust); font-size: 0.92rem; font-family: var(--serif); margin: 0; }
 
   /* ---- install ---- */
@@ -389,6 +384,7 @@
       <a href="#features">features</a>
       <a href="#differentiators">beyond ss</a>
       <a href="#demo">screenshot</a>
+      <a href="#dashboards">web &amp; cockpit</a>
       <a href="#install">install</a>
       <a href="#keys">keys</a>
       <a class="gh" href="https://github.com/padovanl/portop">github ↗</a>
@@ -471,6 +467,14 @@
           <p><code>--compose DIR</code> checks a Docker Compose folder and reports expected, unused or conflicting published ports.</p>
         </div>
         <div class="card">
+          <h3><span class="dot state-new">◈</span>Web dashboard</h3>
+          <p><code>portop --web</code> shows socket and process details in the browser, with light and dark themes and confirmed SIGTERM/SIGKILL. Add <code>--web-auth</code> for a sign-in page.</p>
+        </div>
+        <div class="card">
+          <h3><span class="dot state-established">◆</span>Cockpit add-on</h3>
+          <p>The same view under Tools → Ports in Cockpit on Linux. Signal a process after confirmation, using your Cockpit login and permissions.</p>
+        </div>
+        <div class="card">
           <h3><span class="dot state-established">◆</span>Live settings screen</h3>
           <p><kbd>,</kbd> opens it: cycle 13 themes (Dracula, Nord, Solarized, Gruvbox, Catppuccin, Tokyo Night, Monokai, Darcula, VS Code, Ubuntu, Rosé Pine, ...) with the arrow keys as the whole UI re-skins live, rebind any of 20 actions — saved automatically, no file to touch.</p>
         </div>
@@ -541,6 +545,27 @@
         <img src="assets/demo.gif" alt="portop demo: filtering to a port, viewing process details, the kill confirmation, and the help overlay" loading="lazy">
       </div>
       <p class="demo-caption">Filtering to a port, checking who owns it, and the confirm-before-kill flow — a real recorded session, not staged.</p>
+    </section>
+
+    <section id="dashboards" class="section">
+      <h2>Beyond the terminal</h2>
+      <p class="section-lede">The same live view of ports and processes, for when a terminal isn't at hand: in a browser, or inside Cockpit.</p>
+      <div class="window-grid">
+        <div class="feature-window">
+          <div class="term-titlebar"><span>Web dashboard</span><span class="chip"><span class="k">--web</span></span></div>
+          <a class="window-shot" href="assets/web-dashboard.gif"><img src="assets/web-dashboard.gif" width="960" height="600" alt="Signing in to the portop web dashboard, filtering to redis and opening its process details" loading="lazy"></a>
+          <div class="feature-window-body">
+            <p><code>portop --web</code> serves a dashboard on <code>127.0.0.1:8088</code>, with search, process details and confirmed SIGTERM/SIGKILL. Add <code>--web-auth</code> for a <a href="assets/web-login.png">sign-in page</a>; with it, the dashboard can listen beyond loopback and serve HTTPS with <code>--web-tls-cert</code>/<code>--web-tls-key</code>.</p>
+          </div>
+        </div>
+        <div class="feature-window">
+          <div class="term-titlebar"><span>Cockpit add-on</span><span class="chip"><span class="k">Tools → Ports</span></span></div>
+          <a class="window-shot" href="assets/cockpit.gif"><img src="assets/cockpit.gif" width="960" height="600" alt="Opening Tools, Ports (portop) in Cockpit and inspecting the redis-server process" loading="lazy"></a>
+          <div class="feature-window-body">
+            <p>On Linux, copy <code>cockpit/portop</code> to <code>~/.local/share/cockpit/portop</code> and open <strong>Tools → Ports (portop)</strong>. It runs through Cockpit's bridge with your login and permissions, so there's no extra service to expose. <a href="https://github.com/padovanl/portop/blob/main/cockpit/README.md">Setup steps</a>.</p>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section id="install" class="section install">
