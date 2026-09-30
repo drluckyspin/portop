@@ -146,11 +146,13 @@ tbody tr:hover { background: var(--row-hover); }
 .footnote { margin: 14px 0 35px; color: var(--muted); font-size: .7rem; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 #details { width: min(620px, calc(100% - 24px)); max-height: min(90vh, 900px); padding: 0; border: 1px solid var(--dialog-border); border-radius: 9px; color: var(--text); background: var(--surface); box-shadow: 0 22px 70px var(--shadow); }
+/* Only the body scrolls, so the confirmation and footer buttons stay visible. */
+#details[open] { display: flex; flex-direction: column; }
 #details::backdrop { background: var(--backdrop); }
 .dialog-head { display: flex; align-items: start; justify-content: space-between; padding: 20px 22px; border-bottom: 1px solid var(--border); }
 h2 { margin: 0; font-size: 1.3rem; }
 .icon-button { border: 0; color: var(--secondary); background: transparent; font-size: 1.7rem; line-height: 1; }
-.dialog-body { max-height: 58vh; overflow: auto; padding: 6px 22px 16px; }
+.dialog-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 6px 22px 16px; }
 h3 { margin: 18px 0 10px; color: var(--cyan); font-size: .7rem; letter-spacing: .09em; text-transform: uppercase; }
 .fields { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 8px 12px; margin: 0; font-size: .76rem; }
 .fields dt { color: var(--secondary); }
@@ -164,7 +166,7 @@ h3 { margin: 18px 0 10px; color: var(--cyan); font-size: .7rem; letter-spacing: 
 .button:disabled { cursor: not-allowed; opacity: .45; }
 .button.danger { border-color: var(--danger-border); color: var(--danger-text); background: var(--danger-bg); }
 .button.danger:hover:not(:disabled) { background: var(--danger-hover); }
-.confirm { margin: 0 22px 12px; padding: 12px; border: 1px solid var(--danger-border); border-radius: 5px; background: var(--confirm-bg); font-size: .76rem; }
+.confirm { flex: none; margin: 0 22px 12px; padding: 12px; border: 1px solid var(--danger-border); border-radius: 5px; background: var(--confirm-bg); font-size: .76rem; }
 .confirm p { margin: 0 0 12px; line-height: 1.5; }
 .confirm > div { justify-content: flex-end; }
 .session { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: .72rem; }
