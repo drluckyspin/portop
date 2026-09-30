@@ -1,10 +1,11 @@
+<img src="docs/assets/logo.png" alt="" width="80" align="right">
+
 # portop 🔌
 
 [![CI](https://github.com/padovanl/portop/actions/workflows/ci.yml/badge.svg)](https://github.com/padovanl/portop/actions/workflows/ci.yml)
 [![Release](https://github.com/padovanl/portop/actions/workflows/release.yml/badge.svg)](https://github.com/padovanl/portop/actions/workflows/release.yml)
 [![Latest release](https://img.shields.io/github/v/release/padovanl/portop?sort=semver)](https://github.com/padovanl/portop/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/padovanl/portop/total)](https://github.com/padovanl/portop/releases)
-[![Go Report Card](https://goreportcard.com/badge/github.com/padovanl/portop)](https://goreportcard.com/report/github.com/padovanl/portop)
 [![Go version](https://img.shields.io/github/go-mod/go-version/padovanl/portop)](go.mod)
 [![License: MIT](https://img.shields.io/github/license/padovanl/portop)](LICENSE)
 
@@ -59,8 +60,11 @@ open, inspect or kill it, live.
   listening, unused, or already taken by another process/container.
 - **Scriptable**: `--json` prints a clean snapshot for piping into `jq`,
   dashboards, or your own tooling.
-- **Local web dashboard**: `--web` shows live ports in a browser, with search
-  and process details, with confirmed SIGTERM and SIGKILL actions.
+- **Web dashboard**: `--web` shows live ports in a browser, with search,
+  process details and confirmed SIGTERM/SIGKILL actions. Add `--web-auth`
+  for a sign-in page, and serve it to other machines over HTTPS.
+- **Cockpit add-on**: the same view under **Tools → Ports (portop)**, using
+  Cockpit's own login and your user's permissions.
 
 ### 🎨 Make it yours
 
@@ -88,6 +92,7 @@ You can. But you'll be doing all of this by hand, every time:
 | Docker Compose port audit     | ❌ | ❌ | ❌ | ✅ |
 | Fuzzy filter/search           | ❌ | ❌ | ❌ | ✅ |
 | Themeable / remappable        | ❌ | ❌ | ❌ | ✅ |
+| Browser & Cockpit views       | ❌ | ❌ | ❌ | ✅ |
 
 ## 📥 Installation
 
@@ -258,6 +263,7 @@ portop --compose ./stack --json
 
 portop --web              # local dashboard on port 8088
 portop --web --web-port 9090  # choose the web server port
+portop --web --web-auth   # require sign-in; prints a generated password
 ```
 
 Run `portop --help` for the full flag list.
@@ -416,41 +422,92 @@ OS's config directory.
   to tell apart — `export TERM=xterm-256color` (or `COLORTERM=truecolor`)
   fixes it. This is common in minimal Docker/SSH sessions.
 
-## Browser dashboard
+## 🌐 Web dashboard
 
-From this checkout, build and run the current development version:
+```bash
+portop --web
+```
+
+Open the URL it prints. The dashboard refreshes every two seconds and shows
+local and remote endpoints, process, CPU, systemd unit and container.
+**Details** adds command line, user, memory, threads and open files.
+Terminate (SIGTERM) and Force kill (SIGKILL) require confirmation, and the
+process must still have the same start time as when you opened it.
+
+By default the server binds to `127.0.0.1:8088` and needs no password. The
+printed URL carries a per-run token in its fragment: without it, the table
+is readable but process details and signals are refused. Choose another
+port with `--web-port 9090`, or a loopback address with `--web-addr`.
+`--listen`, `--no-dns`, `--no-systemd`, `--no-docker` and a positional
+filter apply here too. Ctrl-C stops the server.
+
+![portop web dashboard with a process detail dialog](docs/assets/web-dashboard.png)
+
+### Sign-in
+
+`--web-auth` puts the dashboard behind a username and password:
+
+| Flag | Meaning |
+|------|---------|
+| `--web-auth` | Require sign-in. With no password set, portop generates one and prints it. |
+| `--web-user NAME` | Username (default `portop`). Implies `--web-auth`. |
+| `--web-password PASS` | Password. Implies `--web-auth`. Visible to other local users in `ps`, so prefer the variable below on shared machines. |
+| `PORTOP_WEB_PASSWORD` | Password from the environment, used when `--web-password` is not given. |
+| `--web-tls-cert FILE`, `--web-tls-key FILE` | Serve HTTPS with a PEM certificate and key. |
+
+```bash
+portop --web --web-auth
+# portop web: http://127.0.0.1:8088/
+# portop web: sign in as "portop"
+# portop web: password: 7XK2... (generated for this run; ...)
+
+PORTOP_WEB_PASSWORD='choose-one' portop --web --web-user admin
+```
+
+Sessions use an `HttpOnly`, `SameSite=Strict` cookie, last 12 hours and end
+when portop stops. After five failed attempts, a client must wait a minute.
+Process actions also need a per-session token, so a signed-in cookie alone
+cannot be used to kill a process from another site.
+
+#### Reaching the dashboard from another machine
+
+Only a dashboard with sign-in may listen beyond loopback:
+
+```bash
+openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:P-256 -nodes -days 365 \
+  -subj "/CN=$(hostname)" -keyout portop.key -out portop.crt
+PORTOP_WEB_PASSWORD='choose-one' portop --web --web-user admin \
+  --web-addr 0.0.0.0:8088 --web-tls-cert portop.crt --web-tls-key portop.key
+```
+
+Browsers warn about a self-signed certificate until you trust it. Without
+TLS, portop still starts but warns that the password and port data cross
+the network unencrypted; the sign-in page says so too. An SSH tunnel
+(`ssh -L 8088:127.0.0.1:8088 host`) to a loopback-only dashboard is an
+alternative that needs no certificate. What the dashboard can see and signal
+is limited by the user portop runs as.
+
+### Previewing from a checkout
 
 ```bash
 go build -o ./bin/portop ./cmd/portop
-./bin/portop --web --web-port 8088
+./bin/portop --web --web-auth
 ```
-
-Run `portop --web` and open the URL it prints, including the action token in
-its fragment. The dashboard refreshes every two seconds and shows local and
-remote endpoints, process, CPU, systemd unit and container. **Details** adds
-command line, user, memory, threads and open files. Terminate (SIGTERM) and
-Force kill (SIGKILL) require confirmation and the process must still have the
-same start time. Without the printed token, the table remains readable but
-process details and signals are unavailable. The Light/Dark button remembers
-your choice in this browser. Choose another port with
-`portop --web --web-port 9090`. The server binds only to loopback and stops
-with Ctrl-C. `--listen`, `--no-dns`, `--no-systemd`, `--no-docker` and a
-positional filter also apply. `--web-addr` selects a loopback address.
-
-See the [dashboard screenshot](docs/assets/web-dashboard.png).
 
 To preview the GitHub Pages site locally, run `python3 scripts/serve-pages.py`
 from the checkout and open <http://127.0.0.1:8000/>. Use `--port 8001` to
 choose another port; stop the server with Ctrl-C.
 
-## Cockpit add-on
+## 🖥️ Cockpit add-on
 
 The optional Cockpit page is in [`cockpit/portop`](cockpit/README.md). It lists
-ports and process details using the current Cockpit session. It can send
-SIGTERM or SIGKILL after confirmation and needs no separate web server. On a
-Linux host, install the current portop binary and copy `cockpit/portop` into
-`~/.local/share/cockpit/portop`, then open **Tools → Ports (portop)**.
-See the [Cockpit setup steps](cockpit/README.md) for commands.
+ports and process details using the current Cockpit session, and can send
+SIGTERM or SIGKILL after confirmation. It needs no separate web server:
+Cockpit's login and your user's permissions apply. On a Linux host, install
+portop and copy `cockpit/portop` into `~/.local/share/cockpit/portop`, then
+open **Tools → Ports (portop)**. See the [Cockpit setup steps](cockpit/README.md).
+
+![portop inside Cockpit under Tools, dark theme](docs/assets/cockpit.png)
 
 ## 🤝 Contributing
 

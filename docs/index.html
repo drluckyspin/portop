@@ -4,10 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>portop</title>
-<meta name="description" content="portop is an htop-style terminal UI for TCP/UDP ports on Linux and macOS. Find the owning process, inspect it, or stop it. Linux packages include DEB and RPM.">
+<meta name="description" content="portop is an htop-style terminal UI for TCP/UDP ports on Linux and macOS, with a web dashboard and a Cockpit add-on. Find the owning process, inspect it, or stop it.">
 <meta property="og:title" content="portop">
+<meta property="og:image" content="https://padovanl.github.io/portop/assets/logo.png">
 <meta property="og:description" content="An htop-style terminal UI for TCP/UDP ports — process, systemd unit and Docker container in one dashboard, with baseline drift detection, themes and remappable keys.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 256 256%22><rect width=%22256%22 height=%22256%22 rx=%2256%22 fill=%22%231a1409%22/><rect x=%2270%22 y=%2260%22 width=%2228%22 height=%2270%22 rx=%228%22 fill=%22%23ffb000%22/><rect x=%22158%22 y=%2260%22 width=%2228%22 height=%2270%22 rx=%228%22 fill=%22%23ffb000%22/><path d=%22M60 118h136v34a68 68 0 0 1-136 0z%22 fill=%22%23c98a2e%22/><rect x=%22116%22 y=%22182%22 width=%2224%22 height=%2240%22 rx=%226%22 fill=%22%23ffb000%22/></svg>">
+<link rel="icon" href="assets/logo.png">
 <style>
   /* Pages uses an amber terminal palette; the web and Cockpit dashboards have light and dark themes. */
   :root {
@@ -282,6 +283,10 @@
   }
   .demo-frame img { display: block; width: 100%; height: auto; }
   .web-shot { margin-top: 24px; }
+  .shot-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-top: 26px; }
+  .shot-pair figure { margin: 0; }
+  .shot-pair img { display: block; width: 100%; height: auto; border: 1px solid var(--hairline); border-radius: 8px; }
+  .shot-pair figcaption { margin-top: 10px; color: var(--rust); font-size: 0.9rem; font-family: var(--serif); }
   .demo-caption { color: var(--rust); font-size: 0.92rem; font-family: var(--serif); margin: 0; }
 
   /* ---- install ---- */
@@ -466,12 +471,12 @@
           <p><code>--compose DIR</code> checks a Docker Compose folder and reports expected, unused or conflicting published ports.</p>
         </div>
         <div class="card">
-          <h3><span class="dot state-new">◈</span>Local web dashboard</h3>
-          <p><code>portop --web</code> shows socket and process details in a local dashboard with light and dark themes. Confirm before SIGTERM or SIGKILL. Pick a port with <code>--web-port</code>.</p>
+          <h3><span class="dot state-new">◈</span>Web dashboard</h3>
+          <p><code>portop --web</code> shows socket and process details in the browser, with light and dark themes and confirmed SIGTERM/SIGKILL. Add <code>--web-auth</code> for a sign-in page.</p>
         </div>
         <div class="card">
           <h3><span class="dot state-established">◆</span>Cockpit add-on</h3>
-          <p>Inspect sockets and processes in Cockpit on Linux. Signal a process after confirmation, using your Cockpit user's permissions.</p>
+          <p>The same view under Tools → Ports in Cockpit on Linux. Signal a process after confirmation, using your Cockpit login and permissions.</p>
         </div>
         <div class="card">
           <h3><span class="dot state-established">◆</span>Live settings screen</h3>
@@ -539,31 +544,50 @@
 
     <section id="web" class="section">
       <h2>Ports in your browser</h2>
-      <p class="section-lede">A compact view of local and remote endpoints, owners, CPU, systemd units and containers. Search, inspect the full process record, or confirm a signal. Switch between dark and light themes. It refreshes every two seconds and listens only on your machine.</p>
-      <div class="feature-window">
-        <div class="term-titlebar"><span>Start the web dashboard</span><span class="chip"><span class="k">--web</span></span></div>
-        <div class="feature-window-body">
-          <p><code>portop --web</code> starts on port <code>8088</code>. Use <code>--web-port 9090</code> to change it. Open the URL printed in the terminal to enable process details and confirmed SIGTERM/SIGKILL actions.</p>
+      <p class="section-lede">Local and remote endpoints, owners, CPU, systemd units and containers, refreshed every two seconds. Search, open the full process record, or confirm a signal.</p>
+      <div class="window-grid">
+        <div class="feature-window">
+          <div class="term-titlebar"><span>On this machine</span><span class="chip"><span class="k">--web</span></span></div>
+          <div class="feature-window-body">
+            <p><code>portop --web</code> listens on <code>127.0.0.1:8088</code>. Open the URL it prints: its one-time token enables process details and SIGTERM/SIGKILL. <code>--web-port 9090</code> picks another port.</p>
+          </div>
+        </div>
+        <div class="feature-window">
+          <div class="term-titlebar"><span>Behind a password</span><span class="chip"><span class="k">--web-auth</span></span></div>
+          <div class="feature-window-body">
+            <p>Adds a sign-in page. Choose credentials with <code>--web-user</code> and <code>--web-password</code> (or <code>PORTOP_WEB_PASSWORD</code>), or let portop generate a password. With sign-in on, <code>--web-addr 0.0.0.0:8088</code> and <code>--web-tls-cert</code>/<code>--web-tls-key</code> serve it to other machines over HTTPS.</p>
+          </div>
         </div>
       </div>
       <div class="demo-frame web-shot">
-        <a href="assets/web-dashboard.png" aria-label="Open the full-size web dashboard screenshot">
-          <img src="assets/web-dashboard.png" width="1440" height="950" alt="Portop dark web dashboard showing sample sockets, process owners, state filters and search" loading="lazy">
-        </a>
+        <img src="assets/web-dashboard.gif" width="960" height="600" alt="Signing in to the portop web dashboard, filtering to redis, opening its process details and the terminate confirmation, then showing listening ports" loading="lazy">
       </div>
-      <p class="demo-caption">Example data showing the web dashboard layout; actual sockets and available actions depend on your user permissions.</p>
+      <p class="demo-caption">Recorded against a demo host running nginx, sshd, redis and a Python service. Rows marked Unknown belong to root and are shown without an owner, as they would be to any unprivileged user.</p>
+      <div class="shot-pair">
+        <figure>
+          <a href="assets/web-login.png"><img src="assets/web-login.png" width="1440" height="950" alt="The portop sign-in page in the dark theme, over a blurred outline of the dashboard" loading="lazy"></a>
+          <figcaption>The sign-in page says whether the connection is local, HTTPS or unencrypted.</figcaption>
+        </figure>
+        <figure>
+          <a href="assets/web-dashboard.png"><img src="assets/web-dashboard.png" width="1440" height="950" alt="Process details for redis-server in the portop web dashboard" loading="lazy"></a>
+          <figcaption>Details: command line, user, executable, memory, threads and open files.</figcaption>
+        </figure>
+      </div>
     </section>
 
     <section id="cockpit" class="section">
       <h2>Portop in Cockpit</h2>
-      <p class="section-lede">On Linux, the optional Cockpit page shows socket and process details inside your current session. Search, switch themes, and confirm SIGTERM or SIGKILL without starting a separate web server.</p>
+      <p class="section-lede">On Linux, the optional add-on puts the same view under Tools → Ports (portop). It runs through Cockpit's bridge with your Cockpit login and permissions, so there is no extra service to expose.</p>
       <div class="feature-window">
         <div class="term-titlebar"><span>Install the add-on</span><span class="chip"><span class="k">Cockpit</span></span></div>
         <div class="feature-window-body">
-          <p>Install the portop binary on the host, then copy <code>cockpit/portop</code> to <code>~/.local/share/cockpit/portop</code>. Open Cockpit on port <code>9090</code> and select <strong>Tools → Ports (portop)</strong>.</p>
-          <p>See the <a href="https://github.com/padovanl/portop/blob/main/cockpit/README.md">step-by-step Cockpit instructions</a>. Socket visibility and process actions use your Cockpit user's permissions.</p>
+          <p>Install the portop binary on the host, then copy <code>cockpit/portop</code> to <code>~/.local/share/cockpit/portop</code>. Open Cockpit on port <code>9090</code> and select <strong>Tools → Ports (portop)</strong>. See the <a href="https://github.com/padovanl/portop/blob/main/cockpit/README.md">step-by-step Cockpit instructions</a>.</p>
         </div>
       </div>
+      <div class="demo-frame web-shot">
+        <img src="assets/cockpit.gif" width="960" height="600" alt="Opening Tools, Ports (portop) in Cockpit's dark theme and inspecting the redis-server process" loading="lazy">
+      </div>
+      <p class="demo-caption">Cockpit's dark style with the add-on's dark theme. The Light/Dark switch in the page is remembered per browser.</p>
     </section>
 
     <section id="demo" class="section">
