@@ -6,7 +6,7 @@ Build the current checkout and install the binary and page on the Linux host:
 go build -o ./bin/portop ./cmd/portop
 sudo install -m 755 ./bin/portop /usr/local/bin/portop
 install -d "$HOME/.local/share/cockpit/portop"
-cp cockpit/portop/{manifest.json,index.html,portop.css,portop.js} "$HOME/.local/share/cockpit/portop/"
+cp cockpit/portop/{manifest.json,index.html,portop.css,portop.js,logo.png} "$HOME/.local/share/cockpit/portop/"
 ```
 
 Run `cockpit-bridge --packages` and look for `portop`. Open
