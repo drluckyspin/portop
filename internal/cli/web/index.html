@@ -5,14 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#1a1b26">
   <title>portop · Ports</title>
+  <link rel="icon" href="/logo.png">
   <link rel="stylesheet" href="/app.css">
   <script defer src="/app.js"></script>
 </head>
 <body>
   <main class="workspace">
     <header class="topbar">
-      <div class="brand"><span class="brand-mark" aria-hidden="true">:</span>port<span>op</span><small>/ ports</small></div>
-      <div class="top-actions"><span class="mode"><span class="live-dot" aria-hidden="true"></span>LOCAL · LIVE</span><button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch to light theme">☀ Light</button></div>
+      <div class="brand"><img class="brand-logo" src="/logo.png" alt="" width="26" height="26">port<span>op</span><small>/ ports</small></div>
+      <div class="top-actions"><div id="session" class="session" hidden><span id="session-user"></span><form method="post" action="/logout"><button type="submit">Sign out</button></form></div><span class="mode"><span class="live-dot" aria-hidden="true"></span><span id="mode-label">LOCAL · LIVE</span></span><button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch to light theme">☀ Light</button></div>
     </header>
 
     <section class="overview" aria-labelledby="page-title">

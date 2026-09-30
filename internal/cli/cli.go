@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -40,6 +41,10 @@ Usage:
   portop --compose DIR     audit published ports from a Docker Compose folder
   portop --web             serve a local dashboard at http://127.0.0.1:8088
   portop --web --web-port 9090  choose the dashboard port
+  portop --web --web-auth       require sign-in (password printed if not set)
+  portop --web --web-user admin --web-password secret --web-addr 0.0.0.0:8088
+                           sign in with your own credentials; reachable
+                           from other machines (add --web-tls-cert/-key)
   portop --init-config     write a default config.yml and exit
 
 config.yml (optional, see --init-config) sets default flag values, the
@@ -64,7 +69,12 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	jsonMode := fs.Bool("json", false, "print a JSON snapshot and exit (non-interactive)")
 	webMode := fs.Bool("web", false, "serve a local web dashboard")
 	webPort := fs.Int("web-port", 8088, "web dashboard port (loopback only)")
-	webAddr := fs.String("web-addr", "127.0.0.1:8088", "web dashboard listen address (loopback only)")
+	webAddr := fs.String("web-addr", "127.0.0.1:8088", "web dashboard listen address (loopback only unless --web-auth is set)")
+	webAuthOn := fs.Bool("web-auth", false, "require a username and password to open the web dashboard")
+	webUser := fs.String("web-user", "portop", "web dashboard username (implies --web-auth)")
+	webPassword := fs.String("web-password", "", "web dashboard password (implies --web-auth; default: $PORTOP_WEB_PASSWORD, or generated and printed)")
+	webTLSCert := fs.String("web-tls-cert", "", "serve the web dashboard over HTTPS with this PEM certificate")
+	webTLSKey := fs.String("web-tls-key", "", "PEM private key for --web-tls-cert")
 	noDNS := fs.Bool("no-dns", false, "disable reverse DNS lookups on ESTABLISHED connections")
 	noSystemd := fs.Bool("no-systemd", false, "disable systemd unit association")
 	noDocker := fs.Bool("no-docker", false, "disable Docker container association")
@@ -226,12 +236,18 @@ func Run(args []string, stdout, stderr io.Writer) int {
 
 	switch {
 	case *webMode:
-		address, err := webAddress(*webAddr, *webPort, explicit["web-addr"], explicit["web-port"])
+		serve, err := webServeOptions(webFlags{
+			addr: *webAddr, port: *webPort, addrSet: explicit["web-addr"], portSet: explicit["web-port"],
+			auth: *webAuthOn, authSet: explicit["web-auth"],
+			user: *webUser, userSet: explicit["web-user"],
+			password: *webPassword, passwordSet: explicit["web-password"], passwordEnv: os.Getenv("PORTOP_WEB_PASSWORD"),
+			tlsCert: *webTLSCert, tlsKey: *webTLSKey,
+		})
 		if err != nil {
 			fmt.Fprintln(stderr, "portop: "+err.Error())
 			return 2
 		}
-		return runWeb(stdout, stderr, address, filter, *listenOnly, opts)
+		return runWeb(stdout, stderr, serve, webConfig{Filter: filter, ListenOnly: *listenOnly, Options: opts})
 	case *composeDir != "":
 		return runComposeAudit(stdout, stderr, *composeDir, *jsonMode, opts)
 	case *saveBaseline:

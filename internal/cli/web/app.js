@@ -30,7 +30,7 @@
         sessionStorage.setItem(tokenKey, fragment.get("token"));
         history.replaceState(null, "", location.pathname + location.search);
     }
-    const token = sessionStorage.getItem(tokenKey);
+    let token = sessionStorage.getItem(tokenKey);
     let rows = [];
     let selectedState = "all";
     let selected = null;
@@ -201,11 +201,30 @@
         }
     }
 
+    // With --web-auth the signed-in session replaces the token in the URL.
+    async function loadSession() {
+        try {
+            const response = await fetch("/api/session", { cache: "no-store" });
+            if (!response.ok) return;
+            const session = await response.json();
+            token = session.token;
+            byId("session-user").textContent = session.user;
+            byId("session").hidden = false;
+            if (session.host) byId("mode-label").textContent = session.host.toUpperCase() + " · LIVE";
+        } catch (_) {
+            // Without a session endpoint the dashboard runs without sign-in.
+        }
+    }
+
     async function refresh() {
         if (refreshing || document.hidden) return;
         refreshing = true;
         try {
             const response = await fetch("/api/ports", { cache: "no-store" });
+            if (response.status === 401) {
+                location.assign("/login");
+                return;
+            }
             if (!response.ok) throw new Error("port scan failed");
             rows = await response.json();
             const listening = rows.filter(row => row.state === "LISTEN").length;
@@ -248,6 +267,6 @@
             filter.focus();
         }
     });
-    refresh();
+    loadSession().then(refresh);
     setInterval(refresh, 2000);
 })();

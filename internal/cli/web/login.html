@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1a1b26">
+  <meta name="robots" content="noindex">
+  <title>Sign in · portop</title>
+  <link rel="icon" href="/logo.png">
+  <link rel="stylesheet" href="/app.css">
+  <script defer src="/login.js"></script>
+</head>
+<body class="login-page">
+  <div class="ghost" aria-hidden="true">
+    <div class="workspace">
+      <div class="topbar"><div class="brand"><img class="brand-logo" src="/logo.png" alt="" width="26" height="26">port<span>op</span><small>/ ports</small></div></div>
+      <div class="overview">
+        <div><span class="bar w-8"></span><span class="bar tall w-14"></span><span class="bar w-30"></span></div>
+        <div class="stats"><div><span class="bar tall w-4"></span><span class="bar w-8"></span></div><div><span class="bar tall w-4"></span><span class="bar w-8"></span></div><div><span class="bar tall w-4"></span><span class="bar w-8"></span></div></div>
+      </div>
+      <div class="panel">
+        <div class="toolbar"><span class="bar w-30"></span><span class="bar w-20"></span></div>
+        <div class="ghost-rows">
+          <div><span class="bar port-bar w-6"></span><span class="bar w-12"></span><span class="bar pill listen"></span><span class="bar w-10"></span><span class="bar w-4"></span><span class="bar w-12"></span></div>
+          <div><span class="bar port-bar w-4"></span><span class="bar w-16"></span><span class="bar pill"></span><span class="bar w-8"></span><span class="bar w-4"></span><span class="bar w-6"></span></div>
+          <div><span class="bar port-bar w-6"></span><span class="bar w-12"></span><span class="bar pill listen"></span><span class="bar w-12"></span><span class="bar w-4"></span><span class="bar w-14"></span></div>
+          <div><span class="bar port-bar w-5"></span><span class="bar w-14"></span><span class="bar pill"></span><span class="bar w-10"></span><span class="bar w-4"></span><span class="bar w-8"></span></div>
+          <div><span class="bar port-bar w-6"></span><span class="bar w-12"></span><span class="bar pill listen"></span><span class="bar w-6"></span><span class="bar w-4"></span><span class="bar w-10"></span></div>
+          <div><span class="bar port-bar w-4"></span><span class="bar w-16"></span><span class="bar pill"></span><span class="bar w-12"></span><span class="bar w-4"></span><span class="bar w-12"></span></div>
+          <div><span class="bar port-bar w-5"></span><span class="bar w-12"></span><span class="bar pill listen"></span><span class="bar w-8"></span><span class="bar w-4"></span><span class="bar w-6"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button id="theme-toggle" class="theme-toggle login-theme" type="button" aria-label="Switch to light theme">☀ Light</button>
+
+  <main class="login-shell">
+    <form class="login-card" method="post" action="/login">
+      <div class="brand"><img class="brand-logo" src="/logo.png" alt="" width="26" height="26">port<span>op</span><small>/ sign in</small></div>
+      <p class="eyebrow">{{if .Host}}{{.Host}}{{else}}LOCKED{{end}}</p>
+      <h1>Sign in</h1>
+      <p class="lede">Sockets and processes on this host are behind a password.</p>
+      {{if .Error}}<p class="login-error" role="alert">{{.Error}}</p>{{end}}
+      <label class="login-field" for="username">Username</label>
+      <input id="username" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" value="{{.User}}" required{{if not .User}} autofocus{{end}}>
+      <label class="login-field" for="password">Password</label>
+      <div class="password-field">
+        <input id="password" name="password" type="password" autocomplete="current-password" required{{if .User}} autofocus{{end}}>
+        <button id="reveal" type="button" aria-controls="password" aria-pressed="false">Show</button>
+      </div>
+      <button class="button login-submit" type="submit">Sign in</button>
+      <p class="transport{{if .Warning}} warning{{end}}"><span aria-hidden="true">{{if .Warning}}▲{{else}}●{{end}}</span> {{.Transport}}</p>
+    </form>
+    <p class="login-foot">Sessions last 12 hours and end when portop stops.</p>
+  </main>
+</body>
+</html>
