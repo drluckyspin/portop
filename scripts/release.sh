@@ -1,14 +1,37 @@
 #!/usr/bin/env bash
-# Tags and pushes a release. Usage: scripts/release.sh <version>
+# Tags and pushes a release. Usage: scripts/release.sh <version> [--notes FILE]
 # <version> can be given with or without the leading "v" (e.g. 0.1.0 or v0.1.0).
+#
+# Release notes are optional Markdown that GoReleaser puts above the commit
+# list on the GitHub release. They travel in the annotated tag's message, so
+# the file itself never needs to be committed. Without --notes, the script
+# uses release-notes/<version>.md when it exists (that folder is gitignored).
 set -euo pipefail
 
-if [ $# -ne 1 ]; then
-	echo "Usage: $0 <version>   e.g. $0 v0.1.0" >&2
+usage() {
+	echo "Usage: $0 <version> [--notes FILE]   e.g. $0 v0.1.0" >&2
 	exit 1
-fi
+}
 
-version="$1"
+version=""
+notes=""
+while [ $# -gt 0 ]; do
+	case "$1" in
+	--notes)
+		[ $# -ge 2 ] || usage
+		notes="$2"
+		shift 2
+		;;
+	-*) usage ;;
+	*)
+		[ -z "$version" ] || usage
+		version="$1"
+		shift
+		;;
+	esac
+done
+[ -n "$version" ] || usage
+
 [[ "$version" == v* ]] || version="v${version}"
 
 if ! [[ "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
@@ -56,14 +79,43 @@ if git ls-remote --exit-code --tags origin "refs/tags/${version}" >/dev/null 2>&
 	exit 1
 fi
 
+if [ -z "$notes" ] && [ -f "release-notes/${version}.md" ]; then
+	notes="release-notes/${version}.md"
+fi
+
+# The first line of the tag message is its subject; GoReleaser publishes
+# only the body. A leading "# title" line in the notes is dropped because
+# the release already carries the name "portop <version>".
+message="$(mktemp)"
+trap 'rm -f "$message"' EXIT
+printf 'portop %s\n' "$version" >"$message"
+if [ -n "$notes" ]; then
+	if [ ! -s "$notes" ]; then
+		echo "error: release notes '${notes}' are missing or empty" >&2
+		exit 1
+	fi
+	printf '\n' >>"$message"
+	awk 'NR == 1 && /^# / { skip = 1; next } skip && NF == 0 { next } { skip = 0; print }' "$notes" >>"$message"
+fi
+
 commit="$(git rev-parse --short HEAD)"
+if [ -n "$notes" ]; then
+	echo "Release notes from ${notes}:"
+	echo "----------------------------------------"
+	tail -n +3 "$message"
+	echo "----------------------------------------"
+else
+	echo "No release notes file; the release will list commits only."
+fi
 read -r -p "Create and push tag ${version} on ${commit}? [y/N] " confirm
 if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
 	echo "Aborted."
 	exit 1
 fi
 
-git tag "$version"
+# verbatim keeps Markdown headings, which git would otherwise strip as
+# comment lines.
+git tag -a "$version" --cleanup=verbatim -F "$message"
 git push origin "$version"
 
 echo "Pushed ${version} — https://github.com/padovanl/portop/actions"

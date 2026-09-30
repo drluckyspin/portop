@@ -38,6 +38,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      # checkout can leave the pushed tag as a lightweight ref; refetch it
+      # so GoReleaser can read the release notes in its annotation.
+      - run: git fetch --force --tags
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
